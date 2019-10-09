@@ -1,0 +1,10 @@
+mutation CreateClient($serviceId: ID!, $input: CreateClientInput!) {
+  createClient(serviceId: $serviceId, input: $input) {
+    id
+    name
+    clients {
+      path
+      id
+    }
+  }
+}

@@ -1,0 +1,6 @@
+query Services {
+  services {
+    id
+    name
+  }
+}

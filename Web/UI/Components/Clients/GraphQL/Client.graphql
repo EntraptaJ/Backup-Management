@@ -1,0 +1,13 @@
+query Client($clientId: ID!) {
+  client(clientId: $clientId) {
+    path
+    id
+    backups {
+      id
+      updatedAt
+      createdAt
+      id
+      state
+    }
+  }
+}

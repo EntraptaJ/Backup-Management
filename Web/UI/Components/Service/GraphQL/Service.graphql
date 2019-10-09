@@ -1,0 +1,10 @@
+query Service($serviceId: ID!) {
+  service(serviceId: $serviceId) {
+    id
+    name
+    clients {
+      id
+      path
+    }
+  }
+}

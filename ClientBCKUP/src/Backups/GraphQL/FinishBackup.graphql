@@ -1,0 +1,10 @@
+mutation FinishBackup($backupId: ID!) {
+  finishBackup(backupId: $backupId) {
+    id
+    state
+    client {
+      path
+      id
+    }
+  }
+}

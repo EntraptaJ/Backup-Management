@@ -1,0 +1,10 @@
+mutation CreateBackup($clientToken: String!) {
+  createBackup(clientToken: $clientToken) {
+    id
+    state
+    client {
+      path
+      id
+    }
+  }
+}

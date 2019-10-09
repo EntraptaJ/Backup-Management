@@ -8,8 +8,44 @@ type AuthResponse {
   currentUser: CurrentUser!
 }
 
+type Backup {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  state: BackupState!
+  client: Client!
+}
+
+enum BackupState {
+  STREAMING
+  FINISHED
+}
+
+type Client {
+  id: ID!
+  clientToken: String!
+  path: String!
+  backups: [Backup!]!
+}
+
+type ClientEvent {
+  type: ClientEventType!
+}
+
+enum ClientEventType {
+  BACKUP
+}
+
 type Configuration {
   id: ID!
+}
+
+input CreateClientInput {
+  path: String!
+}
+
+input CreateServiceInput {
+  name: String!
 }
 
 input CreateUtilityInput {
@@ -23,6 +59,11 @@ type CurrentUser {
   roles: [UserRole!]!
 }
 
+"""
+The javascript `Date` as string. Type represents date and time as the ISO Date string.
+"""
+scalar DateTime
+
 input LoginInput {
   username: String!
   password: String!
@@ -32,13 +73,22 @@ type Mutation {
   login(input: LoginInput!): AuthResponse!
   register(input: UserInput!): RegisterResponse!
   resetPasswordReset(input: RequestPasswordResetInput!): Boolean!
+  createBackup(clientToken: String!): Backup!
+  pushBackupChunk(chunk: String!, backupId: ID!): Boolean!
+  finishBackup(backupId: ID!): Backup!
+  createClient(input: CreateClientInput!, serviceId: ID!): Service!
+  emitClientEvent(clientId: ID!): Boolean!
   initialConfiguration(user: UserInput!): Configuration!
+  createService(input: CreateServiceInput!): ServiceOutput!
   createUtility(input: CreateUtilityInput!): Utility!
 }
 
 type Query {
   currentUser: CurrentUser
+  client(clientId: ID!): Client!
   hasSetup: Boolean!
+  services: [Service!]!
+  service(serviceId: ID!): Service!
   users: [User!]!
   user(userId: String!): User!
   utilities: [Utility!]!
@@ -58,6 +108,21 @@ input RequestPasswordResetInput {
 input ResetPasswordInput {
   token: String!
   password: String!
+}
+
+type Service {
+  id: ID!
+  name: String!
+  clients: [Client]!
+}
+
+type ServiceOutput {
+  services: [Service!]!
+  service: Service!
+}
+
+type Subscription {
+  clientEvents(clientToken: String!): ClientEvent!
 }
 
 type User {

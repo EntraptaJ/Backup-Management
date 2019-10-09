@@ -1,0 +1,5 @@
+subscription ClientEvents($clientToken: String!) {
+  clientEvents(clientToken: $clientToken) {
+    type
+  }
+}

@@ -24,8 +24,10 @@ async function startAPI(): Promise<void> {
 
   server.use(serverRouter.routes()).use(serverRouter.allowedMethods());
   const httpServer = await server.listen(80);
+  apiServer.installSubscriptionHandlers(httpServer);
   await dbConnection;
-  console.log(httpServer.connections);
+
+  console.log('API Server started');
 }
 
 startAPI();

@@ -24,7 +24,6 @@ export default function AdminTestRoute(): React.ReactElement {
   const { enqueueSnackbar } = useSnackbar();
 
   const deleteUser = useCallback(() => {
-    console.log(`Deleting User ${userId}`);
     enqueueSnackbar('User deleted Successfully', { variant });
     setUserId(undefined);
   }, [enqueueSnackbar, userId, setUserId, variant]);
