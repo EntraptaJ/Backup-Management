@@ -1,23 +1,24 @@
 // API/src/Modules/Backups/BackupModel.ts
-import { Field, ID, ObjectType } from 'type-graphql';
+import { config } from 'API/Config';
+import { ApolloError } from 'apollo-server-koa';
+import { sign, verify } from 'jsonwebtoken';
+import { Field, ID, Int, ObjectType } from 'type-graphql';
 import {
   BaseEntity,
+  BeforeRemove,
   Column,
   CreateDateColumn,
   Entity,
+  FindOneOptions,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-  FindOneOptions,
-  OneToMany,
 } from 'typeorm';
-import { Service } from '../Services/ServiceModel';
-import { sign, verify } from 'jsonwebtoken';
-import { config } from 'API/Config';
-import { ApolloError } from 'apollo-server-koa';
 import { Backup } from '../Backups/BackupModel';
 import { Schedule } from '../Schedules/ScheduleModel';
+import { Service } from '../Services/ServiceModel';
 
 interface ClientTokenPayload {
   clientId: string;
@@ -62,6 +63,18 @@ export class Client extends BaseEntity {
     return Backup.find({ clientId: this.id });
   }
 
+  @Field(() => Int)
+  async folderSize(): Promise<number> {
+    const { sum } = await Backup.createQueryBuilder('backups')
+      .select('SUM(backups.fileSize)', 'sum')
+      .where('backups.clientId = :clientId', { clientId: this.id })
+      .getRawOne();
+    if (!sum) {
+      return 0;
+    }
+    return sum;
+  }
+
   static async getClientFromToken(
     clientToken: string,
     options?: FindOneOptions<Client>,
@@ -75,5 +88,16 @@ export class Client extends BaseEntity {
       throw new ApolloError('INVALID Subscription', 'INVALID_SUBSCRIPTION');
 
     return client;
+  }
+
+  @BeforeRemove()
+  async beforeRemove(): Promise<void> {
+    console.log(`Removing ${this.id}`);
+
+    const [schedules, backups] = await Promise.all([
+      Schedule.find({ clientId: this.id }),
+      Backup.find({ clientId: this.id }),
+    ]);
+    await Promise.all([Schedule.remove(schedules), Backup.remove(backups)]);
   }
 }

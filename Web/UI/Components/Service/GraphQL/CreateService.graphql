@@ -1,4 +1,4 @@
-mutation CreateService($input: CreateServiceInput!) {
+mutation CreateService($input: ServiceInput!) {
   createService(input: $input) {
     services {
       id

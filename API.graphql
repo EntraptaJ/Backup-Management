@@ -13,6 +13,7 @@ type Backup {
   createdAt: DateTime!
   updatedAt: DateTime!
   state: BackupState!
+  fileSize: Int!
   client: Client!
 }
 
@@ -26,6 +27,7 @@ type Client {
   schedules: [Schedule!]!
   path: String!
   backups: [Backup!]!
+  folderSize: Int!
 }
 
 type ClientEvent {
@@ -34,6 +36,10 @@ type ClientEvent {
 
 enum ClientEventType {
   BACKUP
+}
+
+input ClientInput {
+  path: String!
 }
 
 type Configuration {
@@ -46,10 +52,6 @@ input CreateClientInput {
 
 input CreateScheduleInput {
   time: String!
-}
-
-input CreateServiceInput {
-  name: String!
 }
 
 input CreateUtilityInput {
@@ -82,10 +84,13 @@ type Mutation {
   finishBackup(backupId: ID!): Backup!
   deleteBackup(backupId: ID!): Client!
   createClient(input: CreateClientInput!, serviceId: ID!): Service!
+  updateClient(update: ClientInput, clientId: ID!): Service!
   createSchedule(input: CreateScheduleInput!, clientId: ID!): Client!
-  emitClientEvent(clientId: ID!): Boolean!
+  emitClientEvent(clientId: ID!): Client!
   initialConfiguration(user: UserInput!): Configuration!
-  createService(input: CreateServiceInput!): ServiceOutput!
+  updateSchedule(update: ScheduleInput, scheduleId: ID!): Client!
+  createService(input: ServiceInput!): ServiceOutput!
+  updateService(update: ServiceInput, serviceId: ID!): [Service!]!
   createUtility(input: CreateUtilityInput!): Utility!
 }
 
@@ -124,10 +129,19 @@ type Schedule {
   time: String!
 }
 
+input ScheduleInput {
+  time: String
+}
+
 type Service {
   id: ID!
   name: String!
+  totalSize: Int!
   clients: [Client]!
+}
+
+input ServiceInput {
+  name: String!
 }
 
 type ServiceOutput {

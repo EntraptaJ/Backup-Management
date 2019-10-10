@@ -22,6 +22,7 @@ export type Backup = {
   createdAt: Scalars['DateTime'],
   updatedAt: Scalars['DateTime'],
   state: BackupState,
+  fileSize: Scalars['Int'],
   client: Client,
 };
 
@@ -36,6 +37,7 @@ export type Client = {
   schedules: Array<Schedule>,
   path: Scalars['String'],
   backups: Array<Backup>,
+  folderSize: Scalars['Int'],
 };
 
 export type ClientEvent = {
@@ -46,6 +48,10 @@ export type ClientEvent = {
 export enum ClientEventType {
   Backup = 'BACKUP'
 }
+
+export type ClientInput = {
+  path: Scalars['String'],
+};
 
 export type Configuration = {
    __typename?: 'Configuration',
@@ -58,10 +64,6 @@ export type CreateClientInput = {
 
 export type CreateScheduleInput = {
   time: Scalars['String'],
-};
-
-export type CreateServiceInput = {
-  name: Scalars['String'],
 };
 
 export type CreateUtilityInput = {
@@ -92,10 +94,13 @@ export type Mutation = {
   finishBackup: Backup,
   deleteBackup: Client,
   createClient: Service,
+  updateClient: Service,
   createSchedule: Client,
-  emitClientEvent: Scalars['Boolean'],
+  emitClientEvent: Client,
   initialConfiguration: Configuration,
+  updateSchedule: Client,
   createService: ServiceOutput,
+  updateService: Array<Service>,
   createUtility: Utility,
 };
 
@@ -142,6 +147,12 @@ export type MutationCreateClientArgs = {
 };
 
 
+export type MutationUpdateClientArgs = {
+  update?: Maybe<ClientInput>,
+  clientId: Scalars['ID']
+};
+
+
 export type MutationCreateScheduleArgs = {
   input: CreateScheduleInput,
   clientId: Scalars['ID']
@@ -158,8 +169,20 @@ export type MutationInitialConfigurationArgs = {
 };
 
 
+export type MutationUpdateScheduleArgs = {
+  update?: Maybe<ScheduleInput>,
+  scheduleId: Scalars['ID']
+};
+
+
 export type MutationCreateServiceArgs = {
-  input: CreateServiceInput
+  input: ServiceInput
+};
+
+
+export type MutationUpdateServiceArgs = {
+  update?: Maybe<ServiceInput>,
+  serviceId: Scalars['ID']
 };
 
 
@@ -225,11 +248,20 @@ export type Schedule = {
   time: Scalars['String'],
 };
 
+export type ScheduleInput = {
+  time?: Maybe<Scalars['String']>,
+};
+
 export type Service = {
    __typename?: 'Service',
   id: Scalars['ID'],
   name: Scalars['String'],
+  totalSize: Scalars['Int'],
   clients: Array<Maybe<Client>>,
+};
+
+export type ServiceInput = {
+  name: Scalars['String'],
 };
 
 export type ServiceOutput = {

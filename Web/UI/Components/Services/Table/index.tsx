@@ -14,13 +14,14 @@ import { TableRow } from './Row';
 import { Command, OnSelect } from './Command';
 import { EditingState, ChangeSet } from '@devexpress/dx-react-grid';
 import { useCreateServiceMutation } from 'UI/Components/Service/GraphQL/CreateService.gen';
-import { CreateServiceInput } from 'UI/GraphQL/graphqlTypes.gen';
+import { ServiceInput } from 'UI/GraphQL/graphqlTypes.gen';
 import { useSnackbar } from 'notistack';
+import prettyByte from 'pretty-bytes';
 
 export function ServicesTable(): React.ReactElement {
-  const [createService] = useCreateServiceMutation()
+  const [createService] = useCreateServiceMutation();
   const { data, refetch } = useServicesQuery();
-  const { enqueueSnackbar } = useSnackbar()
+  const { enqueueSnackbar } = useSnackbar();
 
   const onSelect: OnSelect = (action, onExec) => () => {
     if (action === 'edit') {
@@ -34,25 +35,43 @@ export function ServicesTable(): React.ReactElement {
     }
   };
 
-  const handleChanges = useCallback(async ({ added }: ChangeSet) => {
-    if (added) for (const input of added as CreateServiceInput[]) {
-      const result = await createService({ variables: { input } })
-      if (result.data?.createService) {
-        await refetch()
-        enqueueSnackbar('Successfully added service', { variant: 'success' }) 
-      }
-    }
-  }, [createService, enqueueSnackbar, refetch])
+  const handleChanges = useCallback(
+    async ({ added }: ChangeSet) => {
+      if (added)
+        for (const input of added as ServiceInput[]) {
+          const result = await createService({ variables: { input } });
+          if (result.data?.createService) {
+            await refetch();
+            enqueueSnackbar('Successfully added service', {
+              variant: 'success',
+            });
+          }
+        }
+    },
+    [createService, enqueueSnackbar, refetch],
+  );
 
   return (
     <Paper style={{ margin: '1em' }}>
       <Grid
         rows={data?.services || []}
-        columns={[{ name: 'name', title: 'Name' }]}
+        columns={[
+          { name: 'name', title: 'Name' },
+          {
+            name: 'totalSize',
+            title: 'Size',
+            getCellValue: ({ totalSize }) =>
+              totalSize ? prettyByte(totalSize) : 0,
+          },
+        ]}
       >
-        <EditingState onCommitChanges={handleChanges} />
+        <EditingState
+          onCommitChanges={handleChanges}
+          columnExtensions={[
+            { columnName: 'totalSize', editingEnabled: false },
+          ]}
+        />
         <Table rowComponent={TableRow} />
-        <Toolbar />
         <TableHeaderRow />
         <TableEditRow />
         <TableEditColumn

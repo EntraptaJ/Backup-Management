@@ -21,6 +21,10 @@ import { ClientEvent, ClientEventType } from './ClientEventOutput';
 import { clientPubSub } from './ClientPubSub';
 import { Schedule } from '../Schedules/ScheduleModel';
 import { CreateScheduleInput } from './CreateScheduleInput';
+import pEvent from 'p-event';
+import { backupEvents, DATA_PATH } from '../Backups/BackupModel';
+import { ClientInput } from './ClientInput';
+import { mkdir } from 'fs-extra';
 
 const FifteenIntervals = ['00', '15', '30', '45'];
 
@@ -54,10 +58,31 @@ export class ClientResolver {
     });
 
     const client = Client.create({ serviceId: service.id, ...input });
-
     await client.save();
 
+    mkdir(`${DATA_PATH}/${client.id}`);
+
     return service;
+  }
+
+  @Authorized()
+  @Mutation(() => Service)
+  async updateClient(
+    @Arg('clientId', () => ID) clientId: string,
+    @Ctx() { currentUser }: AuthContext,
+    @Arg('update', { nullable: true }) update?: ClientInput,
+  ): Promise<Service> {
+    const client = await Client.createQueryBuilder('client')
+      .leftJoinAndSelect('client.service', 'service')
+      .where('client.id = :clientId', { clientId })
+      .andWhere('service.userId = :userId', { userId: currentUser.id })
+      .getOne();
+
+    if (!client) throw new ForbiddenError();
+
+    if (!update) await client.remove();
+
+    return client.service;
   }
 
   @Authorized()
@@ -111,11 +136,11 @@ export class ClientResolver {
   }
 
   @Authorized()
-  @Mutation(() => Boolean)
+  @Mutation(() => Client)
   async emitClientEvent(
     @Arg('clientId', () => ID) clientId: string,
     @Ctx() { currentUser }: AuthContext,
-  ): Promise<boolean> {
+  ): Promise<Client> {
     const client = await Client.createQueryBuilder('client')
       .leftJoinAndSelect('client.service', 'service')
       .where('client.id = :clientId', { clientId })
@@ -125,7 +150,9 @@ export class ClientResolver {
     if (!client) throw new ForbiddenError();
     clientPubSub.publishClientEvent(client, { type: ClientEventType.BACKUP });
 
-    return true;
+    await pEvent(backupEvents, clientId);
+    await client.reload();
+    return client;
   }
 
   @Subscription({

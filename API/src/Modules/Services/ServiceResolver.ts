@@ -12,9 +12,9 @@ import {
 } from 'type-graphql';
 import { Service } from './ServiceModel';
 import { AuthContext } from 'API/Context';
-import { CreateServiceInput } from './CreateServiceInput';
 import { ServiceOutput } from './ServiceOutput';
 import { Client } from '../Clients/ClientModel';
+import { ServiceInput } from './ServiceInput';
 
 @Resolver(() => Service)
 export class ServiceResolver {
@@ -38,7 +38,7 @@ export class ServiceResolver {
   @Authorized()
   @Mutation(() => ServiceOutput)
   async createService(
-    @Arg('input', () => CreateServiceInput) input: CreateServiceInput,
+    @Arg('input', () => ServiceInput) input: ServiceInput,
     @Ctx() { currentUser }: AuthContext,
   ): Promise<ServiceOutput> {
     const service = Service.create({ ...input, userId: currentUser.id });
@@ -46,6 +46,21 @@ export class ServiceResolver {
     await service.save();
 
     return { services: Service.find(), service };
+  }
+
+  @Authorized()
+  @Mutation(() => [Service])
+  async updateService(
+    @Arg('serviceId', () => ID) serviceId: string,
+    @Ctx() { currentUser }: AuthContext,
+    @Arg('update', { nullable: true }) update?: ServiceInput,
+  ): Promise<Service[]> {
+    const service = await Service.findOneOrFail({
+      where: { id: serviceId, userId: currentUser.id },
+    });
+
+    console.log(service);
+    return Service.find();
   }
 
   @Authorized()

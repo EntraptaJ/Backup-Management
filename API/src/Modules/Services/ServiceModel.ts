@@ -1,5 +1,5 @@
 // API/src/Modules/Services/ServiceModel.ts
-import { ObjectType, Field, ID } from 'type-graphql';
+import { ObjectType, Field, ID, Int } from 'type-graphql';
 import {
   BaseEntity,
   Entity,
@@ -13,6 +13,8 @@ import { User } from '../Users/UserModel';
 import { verify } from 'jsonwebtoken';
 import { config } from 'API/Config';
 import { ApolloError } from 'apollo-server-koa';
+import { Client } from '../Clients/ClientModel';
+import { Backup } from '../Backups/BackupModel';
 
 interface ClientTokenPayload {
   serviceId: string;
@@ -39,6 +41,19 @@ export class Service extends BaseEntity {
   readonly user: User;
   @Column()
   readonly userId: string;
+
+  @Field(() => Int)
+  async totalSize(): Promise<number> {
+    const { sum } = await Client.createQueryBuilder('client')
+      .where('client.serviceId = :serviceId', { serviceId: this.id })
+      .leftJoinAndSelect(Backup, 'backups', 'backups.clientId = client.id')
+      .select('SUM(backups.fileSize)', 'sum')
+      .getRawOne();
+    if (!sum) {
+      return 0;
+    }
+    return sum;
+  }
 
   static async getServiceFromToken(clientToken: string): Promise<Service> {
     const payload = verify(clientToken, config.secretKey) as ClientTokenPayload;

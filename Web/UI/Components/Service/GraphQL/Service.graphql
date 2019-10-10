@@ -5,6 +5,7 @@ query Service($serviceId: ID!) {
     clients {
       id
       path
+      folderSize
     }
   }
 }
