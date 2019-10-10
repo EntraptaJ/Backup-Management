@@ -7,7 +7,6 @@ RUN NODE_ENV=production npm run build
 
 FROM mhart/alpine-node:latest
 WORKDIR /app
-RUN echo "America/Winnipeg" >  /etc/timezone
 ENV NODE_ENV=production
 COPY package.json package-lock.json ./
 RUN npm ci --prod
@@ -18,8 +17,6 @@ COPY --from=1 /app/node_modules/ /app/node_modules/
 COPY --from=1 /usr/bin/node /usr/bin/
 COPY --from=1 /usr/lib/node_modules/ /usr/lib/node_modules/
 COPY --from=1 /usr/lib/libgcc* /usr/lib/libstdc* /usr/lib/
-COPY  --from=1 /usr/share/zoneinfo/America/Winnipeg /etc/localtime
-RUN echo "America/Winnipeg" >  /etc/timezone
 WORKDIR /app
 COPY --from=0 /app/dist/ ./dist/
 COPY package.json /app/

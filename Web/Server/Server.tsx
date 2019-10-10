@@ -62,7 +62,7 @@ export async function uiServer(
 
   const cache = new InMemoryCache();
 
-  const AppComponent = React.createElement(() => (
+  const AppComponent = (
     <StaticRouter location={ctx.url} context={context}>
       <ImportProvider imports={imports}>
         <ConfigProvider {...config}>
@@ -76,28 +76,29 @@ export async function uiServer(
         </ConfigProvider>
       </ImportProvider>
     </StaticRouter>
-  ));
+  );
+
+  renderToString(AppComponent);
+  renderToString(AppComponent);
+
+  await getDataFromTree(AppComponent).catch(() => {});
 
   const preRender = async () => {
     try {
       await prepass(AppComponent);
-    } catch {
+    } catch (e) {
       console.log('Prerender Error');
     }
   };
 
   try {
     await preRender();
-  } catch {}
+  } catch (e) {}
 
   for (const importedItem of imports) {
     const { path } = importedItem;
     initialSources.push({ type: SourceType.SCRIPT, src: parcelManifest[path] });
   }
-
-  try {
-    await getDataFromTree(AppComponent);
-  } catch {}
 
   const headStream = renderHeadStream({
     sources: initialSources,
@@ -109,6 +110,10 @@ export async function uiServer(
     ctx.res,
     { end: false },
   );
+
+  try {
+    await renderToStringWithData(AppComponent);
+  } catch {}
 
   const appStream = renderToNodeStream(sheets.collect(AppComponent));
 
