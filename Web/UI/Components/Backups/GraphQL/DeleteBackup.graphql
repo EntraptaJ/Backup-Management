@@ -1,0 +1,11 @@
+mutation DeleteBackup($backupId: ID!) {
+  deleteBackup(backupId: $backupId) {
+    path
+    id
+    backups {
+      createdAt
+      state
+      id
+    }
+  }
+}

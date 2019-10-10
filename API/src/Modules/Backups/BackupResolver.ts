@@ -8,11 +8,18 @@ import {
   FieldResolver,
   Root,
   Subscription,
+  Ctx,
 } from 'type-graphql';
 import { Backup, BackupState } from './BackupModel';
-import { WriteStream, createWriteStream, createReadStream } from 'fs-extra';
+import {
+  WriteStream,
+  createWriteStream,
+  createReadStream,
+  remove,
+} from 'fs-extra';
 import { createWritableServerStream } from './remote-streamer';
 import { Client } from '../Clients/ClientModel';
+import { AuthContext } from 'API/Context';
 
 const DATA_PATH =
   process.env.NODE_ENV === 'production'
@@ -73,9 +80,24 @@ export class BackupResolver {
     return backup;
   }
 
-  @FieldResolver(() => Client)
-  async client(@Root() { clientId }: Backup): Promise<Client> {
-    return Client.findOneOrFail(clientId);
+  @Mutation(() => Client)
+  async deleteBackup(
+    @Arg('backupId', () => ID) backupId: string,
+    @Ctx() { currentUser }: AuthContext,
+  ): Promise<Client> {
+    const backup = await Backup.createQueryBuilder('backup')
+      .leftJoinAndSelect('backup.client', 'client')
+      .leftJoinAndSelect('client.service', 'service')
+      .where('backup.id = :backupId', { backupId })
+      .andWhere('service.userId = :userId', { userId: currentUser.id })
+      .getOne();
+
+    if (!backup) throw new ForbiddenError();
+
+    await remove(`${DATA_PATH}/${backup.id}.tar`);
+    await backup.remove();
+
+    return backup.client;
   }
 
   @Subscription({
@@ -104,5 +126,10 @@ export class BackupResolver {
     @Root() root: Buffer,
   ): string {
     return root.toString('base64');
+  }
+
+  @FieldResolver(() => Client)
+  async client(@Root() { clientId }: Backup): Promise<Client> {
+    return Client.findOneOrFail(clientId);
   }
 }

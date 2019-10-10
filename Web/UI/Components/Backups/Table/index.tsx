@@ -11,6 +11,8 @@ import { format } from 'date-fns';
 import React, { useCallback } from 'react';
 import { Backup } from 'UI/GraphQL/graphqlTypes.gen';
 import { Command } from '../../Services/Table/Command';
+import { useDeleteBackupMutation } from '../GraphQL/DeleteBackup.gen';
+import { useSnackbar } from 'notistack';
 
 interface BackupTableProps {
   backups?: Pick<Backup, 'id' | 'updatedAt' | 'createdAt' | 'state'>[];
@@ -18,13 +20,22 @@ interface BackupTableProps {
 }
 
 export function BackupTable({ backups }: BackupTableProps): React.ReactElement {
-  const handleChanges = useCallback(async ({ deleted }: ChangeSet) => {}, []);
+  const [deleteBackup] = useDeleteBackupMutation();
+  const { enqueueSnackbar } = useSnackbar();
+
+  const handleChanges = useCallback(async ({ deleted }: ChangeSet) => {
+    if (deleted) for (const backupId of deleted) {
+      const response = await deleteBackup({ variables: { backupId } })
+      if (response.data?.deleteBackup) enqueueSnackbar('Backup Deleted Successfully', { variant: 'success' })
+    };
+  }, [deleteBackup, enqueueSnackbar]);
 
   return (
     <>
       <Paper style={{ margin: '1em' }}>
         <Grid
           rows={backups || []}
+          getRowId={({ id }) => id}
           columns={[
             {
               name: 'createdAt',

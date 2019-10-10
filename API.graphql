@@ -80,6 +80,7 @@ type Mutation {
   createBackup(clientToken: String!): Backup!
   pushBackupChunk(chunk: String!, backupId: ID!): Boolean!
   finishBackup(backupId: ID!): Backup!
+  deleteBackup(backupId: ID!): Client!
   createClient(input: CreateClientInput!, serviceId: ID!): Service!
   createSchedule(input: CreateScheduleInput!, clientId: ID!): Client!
   emitClientEvent(clientId: ID!): Boolean!

@@ -90,6 +90,7 @@ export type Mutation = {
   createBackup: Backup,
   pushBackupChunk: Scalars['Boolean'],
   finishBackup: Backup,
+  deleteBackup: Client,
   createClient: Service,
   createSchedule: Client,
   emitClientEvent: Scalars['Boolean'],
@@ -126,6 +127,11 @@ export type MutationPushBackupChunkArgs = {
 
 
 export type MutationFinishBackupArgs = {
+  backupId: Scalars['ID']
+};
+
+
+export type MutationDeleteBackupArgs = {
   backupId: Scalars['ID']
 };
 
@@ -234,7 +240,13 @@ export type ServiceOutput = {
 
 export type Subscription = {
    __typename?: 'Subscription',
+  getLatestBackup: Scalars['String'],
   clientEvents: ClientEvent,
+};
+
+
+export type SubscriptionGetLatestBackupArgs = {
+  clientToken: Scalars['String']
 };
 
 
