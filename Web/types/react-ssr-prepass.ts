@@ -3,5 +3,8 @@ declare module 'react-ssr-prepass' {
 
   type PrepassFN = (c: React.ReactElement, any: any) => Promise<any>;
 
-  export default function(component: ReactElement, fn?: PrepassFN): void;
+  export default function(
+    component: ReactElement,
+    fn?: PrepassFN,
+  ): Promise<void>;
 }

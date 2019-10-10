@@ -36,3 +36,4 @@ jobs:
           password: ${{ secrets.DOCKER_GITHUB_PASSWORD }}
           registry: docker.pkg.github.com
           path: Web
+          cache: true

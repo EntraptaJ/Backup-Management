@@ -1,5 +1,5 @@
 // Web/Server/Server.tsx
-import { renderToStringWithData } from '@apollo/react-ssr';
+import { renderToStringWithData, getDataFromTree } from '@apollo/react-ssr';
 import ServerStyleSheets from '@material-ui/styles/ServerStyleSheets';
 import { InMemoryCache } from 'apollo-cache-inmemory';
 import { readJSON } from 'fs-extra';
@@ -78,10 +78,14 @@ export async function uiServer(
     </StaticRouter>
   );
 
+  renderToString(AppComponent);
+  renderToString(AppComponent);
+
+  await getDataFromTree(AppComponent).catch(() => {});
+
   const preRender = async () => {
     try {
-      renderToString(AppComponent);
-      await prepass(AppComponent);
+      await prepass(AppComponent).catch(() => {});
     } catch (e) {
       console.log('Prerender Error');
     }
