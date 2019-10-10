@@ -1,5 +1,5 @@
 // Web/Server/Server.tsx
-import { getDataFromTree, renderToStringWithData } from '@apollo/react-ssr';
+import { renderToStringWithData } from '@apollo/react-ssr';
 import ServerStyleSheets from '@material-ui/styles/ServerStyleSheets';
 import { InMemoryCache } from 'apollo-cache-inmemory';
 import { readJSON } from 'fs-extra';

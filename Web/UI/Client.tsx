@@ -12,7 +12,6 @@ import {
 } from './Components/Providers/ImportProvider';
 import { App } from './App';
 import { SnackbarProvider } from 'notistack';
-import { renderToString } from 'react-dom/server';
 
 window.setImmediate = window.setTimeout;
 
