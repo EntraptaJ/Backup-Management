@@ -93,7 +93,6 @@ export class ClientResolver {
 
     if (!client) throw new ForbiddenError();
 
-    console.log(input.time.split(':')[1]);
     if (!FifteenIntervals.includes(input.time.split(':')[1]))
       throw new ArgumentValidationError([
         {
@@ -146,6 +145,7 @@ export class ClientResolver {
       cache: 1000,
       where: { clientId: client.id },
     });
+
     return Schedules;
   }
 }

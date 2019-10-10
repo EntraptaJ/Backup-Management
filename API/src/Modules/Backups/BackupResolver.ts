@@ -39,8 +39,8 @@ export class BackupResolver {
     await backup.save();
 
     const writeStream = createWriteStream(`${DATA_PATH}/${backup.id}.tar`);
-    const backupStream: BackupStream = { id: backup.id, writeStream };
 
+    const backupStream: BackupStream = { id: backup.id, writeStream };
     backupStreams.push(backupStream);
 
     return backup;
@@ -82,14 +82,15 @@ export class BackupResolver {
     // @ts-ignore
     subscribe: async (stuff, { clientToken }) => {
       const client = await Client.getClientFromToken(clientToken);
+
       const backup = await Backup.findOneOrFail({
         where: { clientId: client.id },
         order: { updatedAt: 'DESC' },
       });
 
       const { iterable, writeStream } = await createWritableServerStream();
-      const streamer = createReadStream(`${DATA_PATH}/${backup.id}.tar`);
 
+      const streamer = createReadStream(`${DATA_PATH}/${backup.id}.tar`);
       streamer.pipe(
         writeStream,
         { end: true },

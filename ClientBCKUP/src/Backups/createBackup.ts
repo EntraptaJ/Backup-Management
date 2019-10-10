@@ -31,6 +31,7 @@ export async function createBackup(
     CreateBackupMutation,
     CreateBackupMutationVariables
   >({ mutation: CreateBackup, variables: { clientToken } });
+
   if (!data) throw new Error('INVALID RESPONSE');
 
   return data.createBackup;
@@ -52,6 +53,7 @@ export async function createBackupStream(
           chunk: chunk.toString('base64')
         }
       });
+
       next();
     },
     async final() {

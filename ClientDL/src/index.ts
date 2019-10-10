@@ -40,21 +40,31 @@ async function startClientDL(): Promise<void> {
     .subscribe({
       next({ data }) {
         if (!data) return;
+
         let buffer: Buffer;
+
         if (!initVect && !firstChunk) {
           const newBuff = Buffer.from(data.getLatestBackup, 'base64');
+
           initVect = newBuff.slice(0, 16);
+
           buffer = newBuff.slice(16);
+
           firstChunk = true;
         } else buffer = Buffer.from(data.getLatestBackup, 'base64');
+
         if (!decipher) {
           decipher = createDecipheriv('aes256', cipherKey, initVect);
+
           readStream.pipe(decipher);
+
           decipher.pipe(extractStream);
         }
+
         readStream.push(buffer);
       },
       complete() {
+        extractStream.on('finish', () => process.exit(0));
         console.log(`Extracted`);
       }
     });
