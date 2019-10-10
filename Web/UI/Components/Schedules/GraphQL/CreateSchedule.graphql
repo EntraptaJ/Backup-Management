@@ -1,0 +1,12 @@
+mutation CreateSchedule($clientId: ID!, $input: CreateScheduleInput!) {
+  createSchedule(clientId: $clientId, input: $input) {
+    id
+    path
+    schedules {
+      id
+      createdAt
+      updatedAt
+      time
+    }
+  }
+}

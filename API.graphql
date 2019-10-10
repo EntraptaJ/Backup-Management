@@ -23,7 +23,7 @@ enum BackupState {
 
 type Client {
   id: ID!
-  clientToken: String!
+  schedules: [Schedule!]!
   path: String!
   backups: [Backup!]!
 }
@@ -42,6 +42,10 @@ type Configuration {
 
 input CreateClientInput {
   path: String!
+}
+
+input CreateScheduleInput {
+  time: String!
 }
 
 input CreateServiceInput {
@@ -77,6 +81,7 @@ type Mutation {
   pushBackupChunk(chunk: String!, backupId: ID!): Boolean!
   finishBackup(backupId: ID!): Backup!
   createClient(input: CreateClientInput!, serviceId: ID!): Service!
+  createSchedule(input: CreateScheduleInput!, clientId: ID!): Client!
   emitClientEvent(clientId: ID!): Boolean!
   initialConfiguration(user: UserInput!): Configuration!
   createService(input: CreateServiceInput!): ServiceOutput!
@@ -86,6 +91,7 @@ type Mutation {
 type Query {
   currentUser: CurrentUser
   client(clientId: ID!): Client!
+  getClientToken(clientId: ID!): String!
   hasSetup: Boolean!
   services: [Service!]!
   service(serviceId: ID!): Service!
@@ -110,6 +116,13 @@ input ResetPasswordInput {
   password: String!
 }
 
+type Schedule {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  time: String!
+}
+
 type Service {
   id: ID!
   name: String!
@@ -122,6 +135,7 @@ type ServiceOutput {
 }
 
 type Subscription {
+  getLatestBackup(clientToken: String!): String!
   clientEvents(clientToken: String!): ClientEvent!
 }
 

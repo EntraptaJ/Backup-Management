@@ -1,0 +1,34 @@
+name: API
+on:
+  push:
+jobs:
+  BuildClientDL:
+    name: Build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@master
+      - name: Publish to Registry
+        uses: KristianFJones/Publish-Docker-Github-Action@master
+        with:
+          dockerfile: Web/Dockerfile
+          name: docker.pkg.github.com/kristianfjones/backup-management/backup-management-clientdl
+          username: ${{ secrets.DOCKER_GITHUB_USERNAME }}
+          password: ${{ secrets.DOCKER_GITHUB_PASSWORD }}
+          registry: docker.pkg.github.com
+          path: ClientDL
+  BuildClientBCKUP:
+    name: Build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@master
+      - name: Publish to Registry
+        uses: KristianFJones/Publish-Docker-Github-Action@master
+        with:
+          dockerfile: Web/Dockerfile
+          name: docker.pkg.github.com/kristianfjones/backup-management/backup-management-clientbckup
+          username: ${{ secrets.DOCKER_GITHUB_USERNAME }}
+          password: ${{ secrets.DOCKER_GITHUB_PASSWORD }}
+          registry: docker.pkg.github.com
+          path: ClientBCKUP

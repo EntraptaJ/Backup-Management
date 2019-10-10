@@ -1,10 +1,10 @@
 // ClientBCKUP/src/index.ts
 import { initApollo } from './initApollo';
-import { subscribeToClientEvents } from './events';
+import { subscribeToClientEvents } from './Events';
 
 const URL = process.env.API_URL || 'http://localhost/graphql';
 
-export const clientToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnRJZCI6ImJlMzg2ZTYyLWZlZGQtNDUzZS04NTVlLWRlNzQwOTcyOTYzYiIsImlhdCI6MTU3MDYzNzY1M30.EhTwjYb5k1jyCYw0e-sH7P3RYhyzM_RyG9adW6tLzqg`;
+export const clientToken = process.env.CLIENT_TOKEN;
 
 async function startClientBCKUP(): Promise<void> {
   const client = initApollo({ URL });

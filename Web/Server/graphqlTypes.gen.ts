@@ -33,7 +33,7 @@ export enum BackupState {
 export type Client = {
    __typename?: 'Client',
   id: Scalars['ID'],
-  clientToken: Scalars['String'],
+  schedules: Array<Schedule>,
   path: Scalars['String'],
   backups: Array<Backup>,
 };
@@ -54,6 +54,10 @@ export type Configuration = {
 
 export type CreateClientInput = {
   path: Scalars['String'],
+};
+
+export type CreateScheduleInput = {
+  time: Scalars['String'],
 };
 
 export type CreateServiceInput = {
@@ -87,6 +91,7 @@ export type Mutation = {
   pushBackupChunk: Scalars['Boolean'],
   finishBackup: Backup,
   createClient: Service,
+  createSchedule: Client,
   emitClientEvent: Scalars['Boolean'],
   initialConfiguration: Configuration,
   createService: ServiceOutput,
@@ -131,6 +136,12 @@ export type MutationCreateClientArgs = {
 };
 
 
+export type MutationCreateScheduleArgs = {
+  input: CreateScheduleInput,
+  clientId: Scalars['ID']
+};
+
+
 export type MutationEmitClientEventArgs = {
   clientId: Scalars['ID']
 };
@@ -154,6 +165,7 @@ export type Query = {
    __typename?: 'Query',
   currentUser?: Maybe<CurrentUser>,
   client: Client,
+  getClientToken: Scalars['String'],
   hasSetup: Scalars['Boolean'],
   services: Array<Service>,
   service: Service,
@@ -165,6 +177,11 @@ export type Query = {
 
 
 export type QueryClientArgs = {
+  clientId: Scalars['ID']
+};
+
+
+export type QueryGetClientTokenArgs = {
   clientId: Scalars['ID']
 };
 
@@ -192,6 +209,14 @@ export type RequestPasswordResetInput = {
 export type ResetPasswordInput = {
   token: Scalars['String'],
   password: Scalars['String'],
+};
+
+export type Schedule = {
+   __typename?: 'Schedule',
+  id: Scalars['ID'],
+  createdAt: Scalars['DateTime'],
+  updatedAt: Scalars['DateTime'],
+  time: Scalars['String'],
 };
 
 export type Service = {

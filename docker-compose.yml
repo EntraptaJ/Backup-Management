@@ -14,6 +14,7 @@ services:
     environment:
       DB_HOST: database
       DB_PASSWORD: pgpass
+      TZ: UTC
     volumes:
       - './API:/development'
       - './API.graphql:/API.graphql'
@@ -31,6 +32,13 @@ services:
     image: 'applicationtemplate-gen'
     volumes:
       - './ClientBCKUP:/data'
+  client-dl-gen:
+    build:
+      context: './Scripts/GraphQLCodegen'
+      dockerfile: 'Dockerfile'
+    image: 'applicationtemplate-gen'
+    volumes:
+      - './ClientDL:/data'
   database:
     image: postgres:11-alpine
     ports:
