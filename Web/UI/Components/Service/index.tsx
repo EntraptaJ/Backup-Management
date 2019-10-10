@@ -5,7 +5,6 @@ import { Header } from '../Styles/Header';
 import {
   Grid,
   Table,
-  Toolbar,
   TableHeaderRow,
   TableEditRow,
   TableEditColumn,

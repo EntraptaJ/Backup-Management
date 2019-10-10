@@ -2,7 +2,6 @@
 import {
   Grid,
   Table,
-  Toolbar,
   TableHeaderRow,
   TableEditRow,
   TableEditColumn,

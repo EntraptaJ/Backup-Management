@@ -15,7 +15,7 @@ import { useDeleteBackupMutation } from '../GraphQL/DeleteBackup.gen';
 import { useSnackbar } from 'notistack';
 import { useStartBackupMutation } from 'UI/Components/Clients/GraphQL/CreateBackup.gen';
 import { BaseButton } from 'UI/Components/Styles/Button/BaseButton';
-import prettyByte from 'pretty-bytes'
+import prettyByte from 'pretty-bytes';
 
 interface BackupTableProps {
   backups?: Pick<Backup, 'id' | 'updatedAt' | 'createdAt' | 'state'>[];
@@ -65,8 +65,11 @@ export function BackupTable({
                 format(new Date(createdAt || ''), 'EEEE, MMMM do, hh:mm a'),
             },
             { name: 'state', title: 'State' },
-            { name: 'fileSize', title: 'File Size', getCellValue: ({ fileSize }) => prettyByte(fileSize)
-             }
+            {
+              name: 'fileSize',
+              title: 'File Size',
+              getCellValue: ({ fileSize }) => prettyByte(fileSize),
+            },
           ]}
         >
           <EditingState onCommitChanges={handleChanges} />
