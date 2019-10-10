@@ -1,9 +1,9 @@
-name: API
+name: Client Builds
 on:
   push:
 jobs:
   BuildClientDL:
-    name: Build
+    name: Build ClientDL
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     steps:
@@ -18,7 +18,7 @@ jobs:
           registry: docker.pkg.github.com
           path: ClientDL
   BuildClientBCKUP:
-    name: Build
+    name: Build ClientBCKUP
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     steps:

@@ -78,13 +78,9 @@ export async function uiServer(
     </StaticRouter>
   );
 
-  renderToString(AppComponent);
-  renderToString(AppComponent);
-
-  await getDataFromTree(AppComponent).catch(() => {});
-
   const preRender = async () => {
     try {
+      renderToString(AppComponent);
       await prepass(AppComponent);
     } catch (e) {
       console.log('Prerender Error');
@@ -92,6 +88,7 @@ export async function uiServer(
   };
 
   try {
+    await preRender();
     await preRender();
   } catch (e) {}
 
@@ -110,10 +107,6 @@ export async function uiServer(
     ctx.res,
     { end: false },
   );
-
-  try {
-    await renderToStringWithData(AppComponent);
-  } catch {}
 
   const appStream = renderToNodeStream(sheets.collect(AppComponent));
 
