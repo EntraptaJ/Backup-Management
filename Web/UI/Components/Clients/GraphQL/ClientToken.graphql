@@ -1,0 +1,3 @@
+query GetClientToken($clientId: ID!) {
+  getClientToken(clientId: $clientId)
+}

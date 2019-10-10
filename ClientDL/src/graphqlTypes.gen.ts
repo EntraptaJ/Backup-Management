@@ -234,7 +234,13 @@ export type ServiceOutput = {
 
 export type Subscription = {
    __typename?: 'Subscription',
+  getLatestBackup: Scalars['String'],
   clientEvents: ClientEvent,
+};
+
+
+export type SubscriptionGetLatestBackupArgs = {
+  clientToken: Scalars['String']
 };
 
 
@@ -265,183 +271,13 @@ export type Utility = {
   id: Scalars['ID'],
   name: Scalars['String'],
 };
-export type ClientQueryVariables = {
-  clientId: Scalars['ID']
+
+export type GetLatestBackupSubscriptionVariables = {
+  clientToken: Scalars['String']
 };
 
 
-export type ClientQuery = (
-  { __typename?: 'Query' }
-  & { client: (
-    { __typename?: 'Client' }
-    & Pick<Client, 'path' | 'id'>
-    & { schedules: Array<(
-      { __typename?: 'Schedule' }
-      & Pick<Schedule, 'id' | 'createdAt' | 'updatedAt' | 'time'>
-    )>, backups: Array<(
-      { __typename?: 'Backup' }
-      & Pick<Backup, 'id' | 'updatedAt' | 'createdAt' | 'state'>
-    )> }
-  ) }
-);
-
-export type GetClientTokenQueryVariables = {
-  clientId: Scalars['ID']
-};
-
-
-export type GetClientTokenQuery = (
-  { __typename?: 'Query' }
-  & Pick<Query, 'getClientToken'>
-);
-
-export type CreateClientMutationVariables = {
-  serviceId: Scalars['ID'],
-  input: CreateClientInput
-};
-
-
-export type CreateClientMutation = (
-  { __typename?: 'Mutation' }
-  & { createClient: (
-    { __typename?: 'Service' }
-    & Pick<Service, 'id' | 'name'>
-    & { clients: Array<Maybe<(
-      { __typename?: 'Client' }
-      & Pick<Client, 'path' | 'id'>
-    )>> }
-  ) }
-);
-
-export type CurrentUserFragment = (
-  { __typename?: 'CurrentUser' }
-  & Pick<CurrentUser, 'username' | 'id' | 'roles'>
-);
-
-export type CurrentUserQueryVariables = {};
-
-
-export type CurrentUserQuery = (
-  { __typename?: 'Query' }
-  & { currentUser: Maybe<{ __typename?: 'CurrentUser' }
-    & CurrentUserFragment
-  > }
-);
-
-export type LoginMutationVariables = {
-  input: LoginInput
-};
-
-
-export type LoginMutation = (
-  { __typename?: 'Mutation' }
-  & { login: (
-    { __typename?: 'AuthResponse' }
-    & Pick<AuthResponse, 'token'>
-    & { currentUser: { __typename?: 'CurrentUser' }
-      & CurrentUserFragment
-     }
-  ) }
-);
-
-export type RegisterMutationVariables = {
-  input: UserInput
-};
-
-
-export type RegisterMutation = (
-  { __typename?: 'Mutation' }
-  & { register: (
-    { __typename?: 'RegisterResponse' }
-    & Pick<RegisterResponse, 'token'>
-    & { currentUser: { __typename?: 'CurrentUser' }
-      & CurrentUserFragment
-     }
-  ) }
-);
-
-export type CreateScheduleMutationVariables = {
-  clientId: Scalars['ID'],
-  input: CreateScheduleInput
-};
-
-
-export type CreateScheduleMutation = (
-  { __typename?: 'Mutation' }
-  & { createSchedule: (
-    { __typename?: 'Client' }
-    & Pick<Client, 'id' | 'path'>
-    & { schedules: Array<(
-      { __typename?: 'Schedule' }
-      & Pick<Schedule, 'id' | 'createdAt' | 'updatedAt' | 'time'>
-    )> }
-  ) }
-);
-
-export type CreateServiceMutationVariables = {
-  input: CreateServiceInput
-};
-
-
-export type CreateServiceMutation = (
-  { __typename?: 'Mutation' }
-  & { createService: (
-    { __typename?: 'ServiceOutput' }
-    & { services: Array<(
-      { __typename?: 'Service' }
-      & Pick<Service, 'id' | 'name'>
-    )> }
-  ) }
-);
-
-export type ServiceQueryVariables = {
-  serviceId: Scalars['ID']
-};
-
-
-export type ServiceQuery = (
-  { __typename?: 'Query' }
-  & { service: (
-    { __typename?: 'Service' }
-    & Pick<Service, 'id' | 'name'>
-    & { clients: Array<Maybe<(
-      { __typename?: 'Client' }
-      & Pick<Client, 'id' | 'path'>
-    )>> }
-  ) }
-);
-
-export type ServicesQueryVariables = {};
-
-
-export type ServicesQuery = (
-  { __typename?: 'Query' }
-  & { services: Array<(
-    { __typename?: 'Service' }
-    & Pick<Service, 'id' | 'name'>
-  )> }
-);
-
-export type UsersQueryVariables = {};
-
-
-export type UsersQuery = (
-  { __typename?: 'Query' }
-  & { users: Array<(
-    { __typename?: 'User' }
-    & Pick<User, 'username' | 'id'>
-  )> }
-);
-
-export type InitialConfigurationMutationVariables = {
-  userInput: UserInput
-};
-
-
-export type InitialConfigurationMutation = (
-  { __typename?: 'Mutation' }
-  & { initialConfiguration: (
-    { __typename?: 'Configuration' }
-    & Pick<Configuration, 'id'>
-  ) }
+export type GetLatestBackupSubscription = (
+  { __typename?: 'Subscription' }
+  & Pick<Subscription, 'getLatestBackup'>
 );

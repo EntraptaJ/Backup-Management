@@ -7,9 +7,11 @@ import {
   ForbiddenError,
   FieldResolver,
   Root,
+  Subscription,
 } from 'type-graphql';
 import { Backup, BackupState } from './BackupModel';
-import { WriteStream, createWriteStream } from 'fs-extra';
+import { WriteStream, createWriteStream, createReadStream } from 'fs-extra';
+import { createWritableServerStream } from './remote-streamer';
 import { Client } from '../Clients/ClientModel';
 
 const DATA_PATH =
@@ -74,5 +76,32 @@ export class BackupResolver {
   @FieldResolver(() => Client)
   async client(@Root() { clientId }: Backup): Promise<Client> {
     return Client.findOneOrFail(clientId);
+  }
+
+  @Subscription({
+    // @ts-ignore
+    subscribe: async (stuff, { clientToken }) => {
+      const client = await Client.getClientFromToken(clientToken);
+      const backup = await Backup.findOneOrFail({
+        where: { clientId: client.id },
+        order: { updatedAt: 'DESC' },
+      });
+
+      const { iterable, writeStream } = await createWritableServerStream();
+      const streamer = createReadStream(`${DATA_PATH}/${backup.id}.tar`);
+
+      streamer.pipe(
+        writeStream,
+        { end: true },
+      );
+
+      return iterable;
+    },
+  })
+  getLatestBackup(
+    @Arg('clientToken') clientToken: string,
+    @Root() root: Buffer,
+  ): string {
+    return root.toString('base64');
   }
 }

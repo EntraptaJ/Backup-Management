@@ -1,0 +1,3 @@
+subscription GetLatestBackup($clientToken: String!) {
+  getLatestBackup(clientToken: $clientToken)
+}

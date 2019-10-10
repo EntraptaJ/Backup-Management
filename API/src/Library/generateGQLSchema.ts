@@ -12,5 +12,6 @@ export function generateGQLSchema(): Promise<GraphQLSchema> {
     ],
     authChecker,
     emitSchemaFile: '../API.graphql',
+    dateScalarMode: 'isoDate',
   });
 }

@@ -10,12 +10,14 @@ import {
   ManyToOne,
   JoinColumn,
   FindOneOptions,
+  OneToMany,
 } from 'typeorm';
 import { Service } from '../Services/ServiceModel';
 import { sign, verify } from 'jsonwebtoken';
 import { config } from 'API/Config';
 import { ApolloError } from 'apollo-server-koa';
 import { Backup } from '../Backups/BackupModel';
+import { Schedule } from '../Schedules/ScheduleModel';
 
 interface ClientTokenPayload {
   clientId: string;
@@ -40,7 +42,12 @@ export class Client extends BaseEntity {
   @Column()
   readonly serviceId: string;
 
-  @Field()
+  @Field(() => [Schedule])
+  @OneToMany(() => Schedule, (schedule) => schedule.client, {
+    cascade: ['insert'],
+  })
+  schedules: Schedule[];
+
   clientToken(): string {
     const payload: ClientTokenPayload = { clientId: this.id };
     return sign(payload, config.secretKey);
