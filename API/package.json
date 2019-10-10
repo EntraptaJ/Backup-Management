@@ -15,7 +15,6 @@
     "transform": {
       "^.+\\.(t|j)sx?$": "ts-jest"
     },
-    "globalSetup": "<rootDir>/src/testSetup.ts",
     "testEnvironment": "node",
     "moduleNameMapper": {
       "^API/(.*)$": "<rootDir>/src/$1"
