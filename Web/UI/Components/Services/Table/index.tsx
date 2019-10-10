@@ -42,7 +42,7 @@ export function ServicesTable(): React.ReactElement {
         enqueueSnackbar('Successfully added service', { variant: 'success' }) 
       }
     }
-  }, [])
+  }, [createService, enqueueSnackbar, refetch])
 
   return (
     <Paper style={{ margin: '1em' }}>

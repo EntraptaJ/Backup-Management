@@ -1,12 +1,11 @@
 // Web/UI/Components/Clients/index.tsx
 import React, { useCallback } from 'react';
-import { useClientQuery } from './GraphQL/Client.gen';
-import { Header } from '../Styles/Header';
 import { BackupTable } from '../Backups/Table';
 import { ScheduleTable } from '../Schedules/Table';
-import { useGetClientTokenLazyQuery  } from './GraphQL/ClientToken.gen'
-import Button from '@material-ui/core/Button'
 import { BaseButton } from '../Styles/Button/BaseButton';
+import { Header } from '../Styles/Header';
+import { useClientQuery } from './GraphQL/Client.gen';
+import { useGetClientTokenLazyQuery } from './GraphQL/ClientToken.gen';
 
 interface ClientPageProps {
   serviceId: string;

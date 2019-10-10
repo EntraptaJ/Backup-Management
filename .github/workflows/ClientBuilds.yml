@@ -11,7 +11,7 @@ jobs:
       - name: Publish to Registry
         uses: KristianFJones/Publish-Docker-Github-Action@master
         with:
-          dockerfile: Web/Dockerfile
+          dockerfile: ClientDL/Dockerfile
           name: docker.pkg.github.com/kristianfjones/backup-management/backup-management-clientdl
           username: ${{ secrets.DOCKER_GITHUB_USERNAME }}
           password: ${{ secrets.DOCKER_GITHUB_PASSWORD }}
@@ -26,7 +26,7 @@ jobs:
       - name: Publish to Registry
         uses: KristianFJones/Publish-Docker-Github-Action@master
         with:
-          dockerfile: Web/Dockerfile
+          dockerfile: ClientBCKUP/Dockerfile
           name: docker.pkg.github.com/kristianfjones/backup-management/backup-management-clientbckup
           username: ${{ secrets.DOCKER_GITHUB_USERNAME }}
           password: ${{ secrets.DOCKER_GITHUB_PASSWORD }}

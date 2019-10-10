@@ -5,14 +5,12 @@ import {
   Table,
   TableEditColumn,
   TableEditRow,
-  TableHeaderRow,
-  Toolbar,
 } from '@devexpress/dx-react-grid-material-ui';
 import Paper from '@material-ui/core/Paper';
+import { format } from 'date-fns';
 import React, { useCallback } from 'react';
 import { Backup } from 'UI/GraphQL/graphqlTypes.gen';
 import { Command } from '../../Services/Table/Command';
-import { format } from 'date-fns';
 
 interface BackupTableProps {
   backups?: Pick<Backup, 'id' | 'updatedAt' | 'createdAt' | 'state'>[];
