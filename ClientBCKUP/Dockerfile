@@ -21,4 +21,4 @@ COPY --from=1 /usr/lib/libgcc* /usr/lib/libstdc* /usr/lib/
 WORKDIR /app
 COPY --from=0 /app/dist/ ./dist/
 COPY package.json /app/
-CMD NODE_ENV=production node /app/dist
+CMD NODE_ENV=production node --max_old_space_size=4096 --optimize_for_size --stack_size=4096 /app/dist
