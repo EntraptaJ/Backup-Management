@@ -37,20 +37,40 @@ export async function createBackup(
   return data.createBackup;
 }
 
+let buffers = [];
+let length = 0;
+
+function addBuffer(buffer: Buffer) {
+  buffers.push(buffer);
+  length += buffer.length;
+}
+
+function clearBuffers() {
+  buffers = [];
+  length = 0;
+}
+
 export async function createBackupStream(
   client: ApolloClient<NormalizedCacheObject>,
   backupId: string
 ): Promise<Writable> {
   const writeStream = new Writable({
     async write(chunk: Buffer, encoding: string, next: () => void) {
-      console.log(`Pushing Chunk`, chunk);
-      client.mutate<PushBackupChunkMutation, PushBackupChunkMutationVariables>({
-        mutation: PushBackupChunk,
-        variables: {
-          backupId: backupId,
-          chunk: chunk.toString('base64')
-        }
-      });
+      addBuffer(chunk);
+      if (length >= 196458) {
+        await client.mutate<
+          PushBackupChunkMutation,
+          PushBackupChunkMutationVariables
+        >({
+          mutation: PushBackupChunk,
+          variables: {
+            backupId: backupId,
+            chunk: Buffer.concat(buffers, length).toString('base64')
+          }
+        });
+
+        clearBuffers();
+      }
 
       next();
     },
