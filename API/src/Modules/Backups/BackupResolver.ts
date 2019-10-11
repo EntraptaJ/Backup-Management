@@ -94,7 +94,6 @@ export class BackupResolver {
 
     if (!backup) throw new ForbiddenError();
 
-    // await remove(`${DATA_PATH}/${backup.id}.tar`);
     await backup.remove();
 
     return backup.client;

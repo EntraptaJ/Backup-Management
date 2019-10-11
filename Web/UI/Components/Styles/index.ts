@@ -43,5 +43,8 @@ export const useStyles = makeStyles((theme: Theme) =>
       marginLeft: '1rem',
       marginRight: '1rem',
     },
+    table: {
+      margin: '1em',
+    },
   }),
 );

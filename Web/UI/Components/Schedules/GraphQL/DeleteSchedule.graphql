@@ -1,0 +1,12 @@
+mutation DeleteSchedule($scheduleId: ID!) {
+  deleteSchedule(scheduleId: $scheduleId) {
+    id
+    path
+    schedules {
+      id
+      createdAt
+      updatedAt
+      time
+    }
+  }
+}

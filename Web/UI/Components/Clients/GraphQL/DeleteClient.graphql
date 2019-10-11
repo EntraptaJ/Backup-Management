@@ -1,0 +1,11 @@
+mutation DeleteClient($clientId: ID!) {
+  deleteClient(clientId: $clientId) {
+    id
+    name
+    clients {
+      id
+      path
+      folderSize
+    }
+  }
+}

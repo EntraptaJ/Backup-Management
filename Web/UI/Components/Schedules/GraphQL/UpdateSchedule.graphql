@@ -1,4 +1,4 @@
-mutation UpdateSchedule($scheduleId: ID!, $update: ScheduleInput) {
+mutation UpdateSchedule($scheduleId: ID!, $update: ScheduleInput!) {
   updateSchedule(scheduleId: $scheduleId, update: $update) {
     id
     path

@@ -2,6 +2,7 @@ mutation StartBackup($clientId: ID!) {
   emitClientEvent(clientId: $clientId) {
     id
     path
+    folderSize
     backups {
       id
       updatedAt
@@ -9,6 +10,10 @@ mutation StartBackup($clientId: ID!) {
       id
       state
       fileSize
+    }
+    service {
+      id
+      totalSize
     }
   }
 }

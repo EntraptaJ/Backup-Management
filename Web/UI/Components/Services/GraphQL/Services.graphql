@@ -1,7 +1,10 @@
 query Services {
-  services {
+  currentUser {
     id
-    name
-    totalSize
+    services {
+      id
+      name
+      totalSize
+    }
   }
 }

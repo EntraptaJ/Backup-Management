@@ -24,8 +24,11 @@ enum BackupState {
 
 type Client {
   id: ID!
+  service: Service!
   schedules: [Schedule!]!
   path: String!
+  keepBackupsCount: Float!
+  backupCount: Int!
   backups: [Backup!]!
   folderSize: Int!
 }
@@ -63,6 +66,7 @@ type CurrentUser {
   username: String!
   email: String!
   roles: [UserRole!]!
+  services: [Service!]!
 }
 
 """
@@ -84,13 +88,17 @@ type Mutation {
   finishBackup(backupId: ID!): Backup!
   deleteBackup(backupId: ID!): Client!
   createClient(input: CreateClientInput!, serviceId: ID!): Service!
-  updateClient(update: ClientInput, clientId: ID!): Service!
+  updateClient(update: ClientInput!, clientId: ID!): Service!
+  deleteClient(clientId: ID!): Service!
   createSchedule(input: CreateScheduleInput!, clientId: ID!): Client!
   emitClientEvent(clientId: ID!): Client!
+  purgeBackups(clientId: ID!): Client!
   initialConfiguration(user: UserInput!): Configuration!
-  updateSchedule(update: ScheduleInput, scheduleId: ID!): Client!
+  updateSchedule(update: ScheduleInput!, scheduleId: ID!): Client!
+  deleteSchedule(scheduleId: ID!): Client!
   createService(input: ServiceInput!): ServiceOutput!
-  updateService(update: ServiceInput, serviceId: ID!): [Service!]!
+  updateService(update: ServiceInput!, serviceId: ID!): ServiceOutput!
+  deleteService(serviceId: ID!): ServiceOutput!
   createUtility(input: CreateUtilityInput!): Utility!
 }
 
@@ -145,8 +153,7 @@ input ServiceInput {
 }
 
 type ServiceOutput {
-  services: [Service!]!
-  service: Service!
+  currentUser: CurrentUser!
 }
 
 type Subscription {

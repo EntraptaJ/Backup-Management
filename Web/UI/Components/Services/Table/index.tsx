@@ -1,85 +1,81 @@
 // Web/UI/Components/Services/Table/index.tsx
-import {
-  Grid,
-  Table,
-  TableHeaderRow,
-  TableEditRow,
-  TableEditColumn,
-} from '@devexpress/dx-react-grid-material-ui';
-import Paper from '@material-ui/core/Paper';
-import React, { useCallback } from 'react';
-import { useServicesQuery } from '../GraphQL/Services.gen';
-import { TableRow } from './Row';
-import { Command, OnSelect } from './Command';
-import { EditingState, ChangeSet } from '@devexpress/dx-react-grid';
-import { useCreateServiceMutation } from 'UI/Components/Service/GraphQL/CreateService.gen';
-import { ServiceInput } from 'UI/GraphQL/graphqlTypes.gen';
+import MaterialTable from 'material-table';
 import { useSnackbar } from 'notistack';
 import prettyByte from 'pretty-bytes';
+import React, { useCallback } from 'react';
+import { useHistory } from 'react-router';
+import { useCreateServiceMutation } from 'UI/Components/Service/GraphQL/CreateService.gen';
+import { useDeleteServiceMutation } from 'UI/Components/Service/GraphQL/DeleteService.gen';
+import { Service, ServiceInput } from 'UI/GraphQL/graphqlTypes.gen';
+import { useServicesQuery } from '../GraphQL/Services.gen';
+
+
+type RowClick<T> = (
+  event?: React.MouseEvent,
+  rowData?: T,
+  toggleDetailPanel?: (panelIndex?: number) => void,
+) => void;
+
+type ServiceData = Pick<Service, 'id' | 'name' | 'totalSize'>;
 
 export function ServicesTable(): React.ReactElement {
-  const [createService] = useCreateServiceMutation();
   const { data, refetch } = useServicesQuery();
+  const [createService] = useCreateServiceMutation();
+  const [deleteService] = useDeleteServiceMutation()
+  const history = useHistory()
+
   const { enqueueSnackbar } = useSnackbar();
 
-  const onSelect: OnSelect = (action, onExec) => () => {
-    if (action === 'edit') {
-    }
-    if (action === 'cancel' || action === 'edit' || action === 'commit')
-      return onExec();
-    else if (action === 'add') {
-      onExec();
-    } else if (action === 'delete') {
-      onExec();
-    }
-  };
-
-  const handleChanges = useCallback(
-    async ({ added }: ChangeSet) => {
-      if (added)
-        for (const input of added as ServiceInput[]) {
-          const result = await createService({ variables: { input } });
-          if (result.data?.createService) {
-            await refetch();
-            enqueueSnackbar('Successfully added service', {
-              variant: 'success',
-            });
-          }
-        }
-    },
-    [createService, enqueueSnackbar, refetch],
+  const handleRowClick: RowClick<ServiceData> = useCallback(
+    (a, rowData) => rowData && history.push(`/Services/${rowData.id}`),
+    [history],
   );
 
+  const handleCreateService = useCallback(
+    async (input: ServiceInput) => {
+      const response = await createService({ variables: { input } });
+      if (response.data && response.data.createService) {
+        enqueueSnackbar('Service Created', { variant: 'success' });
+      }
+    },
+    [createService, enqueueSnackbar],
+  );
+
+  const handleDeleteService = useCallback(async ({ id }) => {
+    const response = await deleteService({ variables: { serviceId: id } })
+    if (response.data?.deleteService) enqueueSnackbar('Service deleted successfully', { variant: 'success' })
+  }, [deleteService, enqueueSnackbar])
+
   return (
-    <Paper style={{ margin: '1em' }}>
-      <Grid
-        rows={data?.services || []}
-        columns={[
-          { name: 'name', title: 'Name' },
+    <>
+      <MaterialTable
+        title='Services'
+        onRowClick={handleRowClick}
+        style={{ margin: '1em' }}
+        columns={      [
+          { title: 'Name', field: 'name' },
           {
-            name: 'totalSize',
             title: 'Size',
-            getCellValue: ({ totalSize }) =>
-              totalSize ? prettyByte(totalSize) : 0,
+            field: 'totalSize',
+            render: (data) => (data ? prettyByte(data.totalSize) : 0),
+            editable: 'never',
           },
         ]}
-      >
-        <EditingState
-          onCommitChanges={handleChanges}
-          columnExtensions={[
-            { columnName: 'totalSize', editingEnabled: false },
-          ]}
-        />
-        <Table rowComponent={TableRow} />
-        <TableHeaderRow />
-        <TableEditRow />
-        <TableEditColumn
-          showAddCommand={true}
-          showEditCommand={false}
-          showDeleteCommand={true}
-          commandComponent={Command(onSelect)}
-        />
-      </Grid>
-    </Paper>
+        data={data?.currentUser?.services || [] as ServiceData[]}
+        editable={{
+          onRowAdd: handleCreateService,
+          onRowDelete: handleDeleteService,
+          onRowUpdate: async (test) => console.log(`Update: `, test),
+        }}
+        actions={[
+          {
+            icon: 'refresh',
+            tooltip: 'Refresh',
+            isFreeAction: true,
+            onClick: () => refetch(),
+          },
+        ]}
+      />
+    </>
   );
 }

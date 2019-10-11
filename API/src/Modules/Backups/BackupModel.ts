@@ -68,7 +68,7 @@ export class Backup extends BaseEntity {
   async deleteBackup(): Promise<boolean> {
     console.log(`Deleting archive for ${this.id}`);
 
-    remove(`${DATA_PATH}/${this.id}.tar`).catch(() => {
+    remove(`${DATA_PATH}/${this.clientId}/${this.id}.tar`).catch(() => {
       console.info(`Failed to delete archive for ${this.id}`);
     });
 

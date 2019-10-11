@@ -15,6 +15,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  SelectQueryBuilder,
 } from 'typeorm';
 import { Backup } from '../Backups/BackupModel';
 import { Schedule } from '../Schedules/ScheduleModel';
@@ -37,6 +38,7 @@ export class Client extends BaseEntity {
   @UpdateDateColumn()
   readonly updatedAt: Date;
 
+  @Field(() => Service)
   @ManyToOne(() => Service)
   @JoinColumn()
   readonly service: Service;
@@ -57,6 +59,15 @@ export class Client extends BaseEntity {
   @Field()
   @Column('text')
   path: string;
+
+  @Field()
+  @Column('int', { default: 3 })
+  keepBackupsCount: number;
+
+  @Field(() => Int)
+  async backupCount(): Promise<number> {
+    return Backup.count({ where: { clientId: this.id } });
+  }
 
   @Field(() => [Backup])
   async backups(): Promise<Backup[]> {
@@ -88,6 +99,36 @@ export class Client extends BaseEntity {
       throw new ApolloError('INVALID Subscription', 'INVALID_SUBSCRIPTION');
 
     return client;
+  }
+
+  /**
+   * Purges backups further then the set keep backups amount
+   */
+  async purgeBackups(): Promise<any> {
+    const backups = await Backup.find({
+      where: { clientId: this.id },
+      order: { createdAt: 'DESC' },
+      skip: this.keepBackupsCount,
+    });
+
+    await Backup.remove(backups);
+  }
+
+  static getUserClientQuery(
+    clientId: string,
+    userId: string,
+  ): SelectQueryBuilder<Client> {
+    return Client.createQueryBuilder('client')
+      .leftJoinAndSelect('client.service', 'service')
+      .where('client.id = :clientId', { clientId })
+      .andWhere('service.userId = :userId', { userId });
+  }
+
+  static async getUserClient(
+    clientId: string,
+    userId: string,
+  ): Promise<Client | undefined> {
+    return this.getUserClientQuery(clientId, userId).getOne();
   }
 
   @BeforeRemove()

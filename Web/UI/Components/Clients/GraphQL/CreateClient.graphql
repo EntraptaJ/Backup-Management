@@ -3,8 +3,9 @@ mutation CreateClient($serviceId: ID!, $input: CreateClientInput!) {
     id
     name
     clients {
-      path
       id
+      path
+      folderSize
     }
   }
 }

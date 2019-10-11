@@ -45,22 +45,35 @@ export class ServiceResolver {
 
     await service.save();
 
-    return { services: Service.find(), service };
+    return { currentUser };
   }
 
   @Authorized()
-  @Mutation(() => [Service])
+  @Mutation(() => ServiceOutput)
   async updateService(
     @Arg('serviceId', () => ID) serviceId: string,
+    @Arg('update') update: ServiceInput,
     @Ctx() { currentUser }: AuthContext,
-    @Arg('update', { nullable: true }) update?: ServiceInput,
-  ): Promise<Service[]> {
+  ): Promise<ServiceOutput> {
     const service = await Service.findOneOrFail({
       where: { id: serviceId, userId: currentUser.id },
     });
 
     console.log(service);
-    return Service.find();
+    return { currentUser };
+  }
+
+  @Authorized()
+  @Mutation(() => ServiceOutput)
+  async deleteService(
+    @Arg('serviceId', () => ID) serviceId: string,
+    @Ctx() { currentUser }: AuthContext,
+  ): Promise<ServiceOutput> {
+    const service = await Service.getUserService(serviceId, currentUser);
+
+    await service.remove();
+
+    return { currentUser };
   }
 
   @Authorized()

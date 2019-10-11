@@ -34,8 +34,11 @@ export enum BackupState {
 export type Client = {
    __typename?: 'Client',
   id: Scalars['ID'],
+  service: Service,
   schedules: Array<Schedule>,
   path: Scalars['String'],
+  keepBackupsCount: Scalars['Float'],
+  backupCount: Scalars['Int'],
   backups: Array<Backup>,
   folderSize: Scalars['Int'],
 };
@@ -76,6 +79,7 @@ export type CurrentUser = {
   username: Scalars['String'],
   email: Scalars['String'],
   roles: Array<UserRole>,
+  services: Array<Service>,
 };
 
 
@@ -95,12 +99,16 @@ export type Mutation = {
   deleteBackup: Client,
   createClient: Service,
   updateClient: Service,
+  deleteClient: Service,
   createSchedule: Client,
   emitClientEvent: Client,
+  purgeBackups: Client,
   initialConfiguration: Configuration,
   updateSchedule: Client,
+  deleteSchedule: Client,
   createService: ServiceOutput,
-  updateService: Array<Service>,
+  updateService: ServiceOutput,
+  deleteService: ServiceOutput,
   createUtility: Utility,
 };
 
@@ -148,7 +156,12 @@ export type MutationCreateClientArgs = {
 
 
 export type MutationUpdateClientArgs = {
-  update?: Maybe<ClientInput>,
+  update: ClientInput,
+  clientId: Scalars['ID']
+};
+
+
+export type MutationDeleteClientArgs = {
   clientId: Scalars['ID']
 };
 
@@ -164,13 +177,23 @@ export type MutationEmitClientEventArgs = {
 };
 
 
+export type MutationPurgeBackupsArgs = {
+  clientId: Scalars['ID']
+};
+
+
 export type MutationInitialConfigurationArgs = {
   user: UserInput
 };
 
 
 export type MutationUpdateScheduleArgs = {
-  update?: Maybe<ScheduleInput>,
+  update: ScheduleInput,
+  scheduleId: Scalars['ID']
+};
+
+
+export type MutationDeleteScheduleArgs = {
   scheduleId: Scalars['ID']
 };
 
@@ -181,7 +204,12 @@ export type MutationCreateServiceArgs = {
 
 
 export type MutationUpdateServiceArgs = {
-  update?: Maybe<ServiceInput>,
+  update: ServiceInput,
+  serviceId: Scalars['ID']
+};
+
+
+export type MutationDeleteServiceArgs = {
   serviceId: Scalars['ID']
 };
 
@@ -266,8 +294,7 @@ export type ServiceInput = {
 
 export type ServiceOutput = {
    __typename?: 'ServiceOutput',
-  services: Array<Service>,
-  service: Service,
+  currentUser: CurrentUser,
 };
 
 export type Subscription = {

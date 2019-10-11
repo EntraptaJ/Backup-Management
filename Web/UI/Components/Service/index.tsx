@@ -1,84 +1,82 @@
 // Web/UI/Components/Service/index.tsx
-import React, { useCallback } from 'react';
-import { useServiceQuery } from './GraphQL/Service.gen';
-import { Header } from '../Styles/Header';
-import {
-  Grid,
-  Table,
-  TableHeaderRow,
-  TableEditRow,
-  TableEditColumn,
-} from '@devexpress/dx-react-grid-material-ui';
-import Paper from '@material-ui/core/Paper';
-import { Command } from '../Services/Table/Command';
-import { TableRow } from './Row';
-import { EditingState, ChangeSet } from '@devexpress/dx-react-grid';
-import { useCreateClientMutation } from '../Clients/GraphQL/CreateClient.gen';
-import { CreateClientInput } from 'UI/GraphQL/graphqlTypes.gen';
+import MaterialTable from 'material-table';
 import { useSnackbar } from 'notistack';
+import React, { useCallback } from 'react';
+import { useHistory } from 'react-router';
+import { Client, ClientInput } from 'UI/GraphQL/graphqlTypes.gen';
+import { useCreateClientMutation } from '../Clients/GraphQL/CreateClient.gen';
+import { useDeleteClientMutation } from '../Clients/GraphQL/DeleteClient.gen';
+import { Header } from '../Styles/Header';
+import { useServiceQuery } from './GraphQL/Service.gen';
 import prettyByte from 'pretty-bytes';
 
 interface ServicePageProps {
   serviceId: string;
 }
 
+type ClientData = Pick<Client, 'id' | 'path' | 'folderSize'>;
+
+type RowClick<T> = (
+  event?: React.MouseEvent,
+  rowData?: T,
+  toggleDetailPanel?: (panelIndex?: number) => void,
+) => void;
+
 export function ServicesPage({
   serviceId,
 }: ServicePageProps): React.ReactElement {
-  const { enqueueSnackbar } = useSnackbar();
-  const { data } = useServiceQuery({ variables: { serviceId } });
+  const { data, refetch } = useServiceQuery({ variables: { serviceId } });
   const [createClient] = useCreateClientMutation();
+  const [deleteClient] = useDeleteClientMutation()
+  const { enqueueSnackbar } = useSnackbar()
+  const history = useHistory()
 
-  const handleChanges = useCallback(
-    async ({ added }: ChangeSet) => {
-      if (added)
-        for (const input of added as CreateClientInput[]) {
-          const result = await createClient({
-            variables: { input, serviceId },
-          });
-          if (result.data?.createClient) {
-            enqueueSnackbar('Successfully added service', {
-              variant: 'success',
-            });
-          }
-        }
-    },
-    [serviceId, enqueueSnackbar, createClient],
+  const handleRowClick: RowClick<ClientData> = useCallback(
+    (a, rowData) => rowData && history.push(`/Services/${serviceId}/${rowData.id}`),
+    [history, serviceId],
   );
+
+  const handleCreateClient = useCallback(
+    async (input: ClientInput) => {
+      const response = await createClient({ variables: { input, serviceId } });
+      if (response.data && response.data.createClient) {
+        enqueueSnackbar('Service Created', { variant: 'success' });
+      }
+    },
+    [createClient, enqueueSnackbar, serviceId],
+  );
+
+  const handleDeleteClient = useCallback(async ({ id }) => {
+    const response = await deleteClient({ variables: { clientId: id } })
+    if (response.data?.deleteClient) enqueueSnackbar('Client deleted successfully', { variant: 'success' })
+  }, [deleteClient, enqueueSnackbar])
 
   return (
     <>
       <Header title={{ primary: data?.service.name || 'Service' }} />
-      <Paper style={{ margin: '1em' }}>
-        <Grid
-          rows={data?.service.clients || []}
-          columns={[
-            { name: 'path', title: 'Path' },
-            {
-              name: 'folderSize',
-              title: 'Size',
-              getCellValue: ({ folderSize }) =>
-                folderSize ? prettyByte(folderSize) : 0,
-            },
-          ]}
-        >
-          <EditingState
-            onCommitChanges={handleChanges}
-            columnExtensions={[
-              { columnName: 'folderSize', editingEnabled: false },
-            ]}
-          />
-          <Table rowComponent={TableRow} />
-          <TableHeaderRow />
-          <TableEditRow />
-          <TableEditColumn
-            showAddCommand={true}
-            showEditCommand={false}
-            showDeleteCommand={true}
-            commandComponent={Command((a, t) => () => t())}
-          />
-        </Grid>
-      </Paper>
+      <MaterialTable
+        title='Clients'
+        onRowClick={handleRowClick}
+        style={{ margin: '1em' }}
+        columns={      [
+          { title: 'Path', field: 'path' },
+          { title: 'Folder Size', field: 'folderSize', render: (data) => data ? prettyByte(data.folderSize) : 0 },
+        ]}
+        data={data?.service?.clients as ClientData[] || [] as ClientData[]}
+        editable={{
+          onRowAdd: handleCreateClient,
+          onRowDelete: handleDeleteClient,
+          onRowUpdate: async (test) => console.log(`Update: `, test),
+        }}
+        actions={[
+          {
+            icon: 'refresh',
+            tooltip: 'Refresh',
+            isFreeAction: true,
+            onClick: () => refetch(),
+          },
+        ]}
+      />
     </>
   );
 }

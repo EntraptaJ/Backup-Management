@@ -12,6 +12,7 @@ import {
   UniqueUsernameConstraint,
   UniqueEmailConstraint,
 } from '../Auth/AuthValidator';
+import { Service } from '../Services/ServiceModel';
 
 @ObjectType()
 @Entity()
@@ -57,5 +58,10 @@ export class User extends BaseEntity {
 
   async setPassword(plainText: string): Promise<void> {
     this.hashedPassword = await hashPassword(plainText);
+  }
+
+  get services(): Promise<Service[]> {
+    console.log(`Getting Services`);
+    return Service.getUserServices(this);
   }
 }

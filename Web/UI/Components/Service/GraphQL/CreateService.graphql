@@ -1,8 +1,12 @@
 mutation CreateService($input: ServiceInput!) {
   createService(input: $input) {
-    services {
+    currentUser {
       id
-      name
+      services {
+        id
+        name
+        totalSize
+      }
     }
   }
 }

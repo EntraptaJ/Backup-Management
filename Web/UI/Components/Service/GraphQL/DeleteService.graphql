@@ -1,0 +1,11 @@
+mutation DeleteService($serviceId: ID!) {
+  deleteService(serviceId: $serviceId) {
+    currentUser {
+      id
+      services {
+        id
+        name
+      }
+    }
+  }
+}

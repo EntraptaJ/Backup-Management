@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   Column,
+  BeforeRemove,
 } from 'typeorm';
 import { User } from '../Users/UserModel';
 import { verify } from 'jsonwebtoken';
@@ -65,5 +66,29 @@ export class Service extends BaseEntity {
       throw new ApolloError('INVALID Subscription', 'INVALID_SUBSCRIPTION');
 
     return service;
+  }
+
+  static async getUserServices(user: User | string): Promise<Service[]> {
+    const userId = typeof user === 'string' ? user : user.id;
+
+    return this.find({ userId });
+  }
+
+  static async getUserService(
+    service: string | Service,
+    user: User | string,
+  ): Promise<Service> {
+    const userId = typeof user === 'string' ? user : user.id;
+    if (typeof service === 'string')
+      return this.findOneOrFail({ id: service, userId });
+    else if (service.userId !== userId) throw new Error();
+    return service;
+  }
+
+  @BeforeRemove()
+  async cleanupBeforeRemove(): Promise<void> {
+    const [clients] = await Promise.all([Client.find({ serviceId: this.id })]);
+
+    await Promise.all([Client.remove(clients)]);
   }
 }
