@@ -43,10 +43,8 @@ export async function createBackupStream(
 ): Promise<Writable> {
   const writeStream = new Writable({
     async write(chunk: Buffer, encoding: string, next: () => void) {
-      await client.mutate<
-        PushBackupChunkMutation,
-        PushBackupChunkMutationVariables
-      >({
+      console.log(`Pushing Chunk`, chunk);
+      client.mutate<PushBackupChunkMutation, PushBackupChunkMutationVariables>({
         mutation: PushBackupChunk,
         variables: {
           backupId: backupId,
