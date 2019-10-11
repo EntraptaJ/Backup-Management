@@ -55,9 +55,9 @@ export async function createBackupStream(
   backupId: string
 ): Promise<Writable> {
   const writeStream = new Writable({
-    async write(chunk: Buffer, encoding: string, next: () => void) {
+    async write(chunk, encoding, next) {
       addBuffer(chunk);
-      if (length >= 523888 || !next) {
+      if (length >= 523888) {
         await client.mutate<
           PushBackupChunkMutation,
           PushBackupChunkMutationVariables
@@ -72,11 +72,24 @@ export async function createBackupStream(
         clearBuffers();
       }
 
-      if (!next) console.log('Testing?');
-
       next();
     },
     async final() {
+      if (length > 0) {
+        await client.mutate<
+          PushBackupChunkMutation,
+          PushBackupChunkMutationVariables
+        >({
+          mutation: PushBackupChunk,
+          variables: {
+            backupId: backupId,
+            chunk: Buffer.concat(buffers, length).toString('base64')
+          }
+        });
+
+        clearBuffers();
+      }
+
       const { data } = await client.mutate<
         FinishBackupMutation,
         FinishBackupMutationVariables

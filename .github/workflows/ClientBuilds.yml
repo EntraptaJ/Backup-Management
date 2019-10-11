@@ -17,6 +17,7 @@ jobs:
           password: ${{ secrets.DOCKER_GITHUB_PASSWORD }}
           registry: docker.pkg.github.com
           path: ClientDL
+          cache: true
   BuildClientBCKUP:
     name: Build ClientBCKUP
     runs-on: ubuntu-latest
@@ -32,3 +33,4 @@ jobs:
           password: ${{ secrets.DOCKER_GITHUB_PASSWORD }}
           registry: docker.pkg.github.com
           path: ClientBCKUP
+          cache: true
