@@ -50,6 +50,14 @@ export const initApollo = ({
 
   return new ApolloClient({
     link: link,
-    cache: new InMemoryCache()
+    cache: new InMemoryCache(),
+    defaultOptions: {
+      mutate: {
+        fetchPolicy: 'no-cache'
+      },
+      query: {
+        fetchPolicy: 'no-cache'
+      }
+    }
   });
 };
