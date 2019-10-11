@@ -57,7 +57,7 @@ export async function createBackupStream(
   const writeStream = new Writable({
     async write(chunk: Buffer, encoding: string, next: () => void) {
       addBuffer(chunk);
-      if (length >= 392916) {
+      if (length >= 523888) {
         await client.mutate<
           PushBackupChunkMutation,
           PushBackupChunkMutationVariables
