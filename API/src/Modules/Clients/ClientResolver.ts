@@ -21,6 +21,10 @@ import { ClientEvent, ClientEventType } from './ClientEventOutput';
 import { clientPubSub } from './ClientPubSub';
 import { Schedule } from '../Schedules/ScheduleModel';
 import { CreateScheduleInput } from './CreateScheduleInput';
+import pEvent from 'p-event';
+import { backupEvents, DATA_PATH } from '../Backups/BackupModel';
+import { ClientInput } from './ClientInput';
+import { mkdir } from 'fs-extra';
 
 const FifteenIntervals = ['00', '15', '30', '45'];
 
@@ -32,13 +36,9 @@ export class ClientResolver {
     @Arg('clientId', () => ID) clientId: string,
     @Ctx() { currentUser }: AuthContext,
   ): Promise<Client> {
-    const client = await Client.createQueryBuilder('client')
-      .leftJoinAndSelect('client.service', 'service')
-      .where('client.id = :clientId', { clientId })
-      .andWhere('service.userId = :userId', { userId: currentUser.id })
-      .getOne();
-
+    const client = await Client.getUserClient(clientId, currentUser.id);
     if (!client) throw new ForbiddenError();
+
     return client;
   }
 
@@ -54,10 +54,38 @@ export class ClientResolver {
     });
 
     const client = Client.create({ serviceId: service.id, ...input });
-
     await client.save();
 
-    return service;
+    mkdir(`${DATA_PATH}/${client.id}`);
+
+    return Service.findOneOrFail({ id: client.serviceId });
+  }
+
+  @Authorized()
+  @Mutation(() => Service)
+  async updateClient(
+    @Arg('clientId', () => ID) clientId: string,
+    @Ctx() { currentUser }: AuthContext,
+    @Arg('update') update: ClientInput,
+  ): Promise<Service> {
+    const client = await Client.getUserClient(clientId, currentUser.id);
+    if (!client) throw new ForbiddenError();
+
+    return client.service;
+  }
+
+  @Authorized()
+  @Mutation(() => Service)
+  async deleteClient(
+    @Arg('clientId', () => ID) clientId: string,
+    @Ctx() { currentUser }: AuthContext,
+  ): Promise<Service> {
+    const client = await Client.getUserClient(clientId, currentUser.id);
+    if (!client) throw new ForbiddenError();
+
+    await client.remove();
+
+    return client.service;
   }
 
   @Authorized()
@@ -66,12 +94,7 @@ export class ClientResolver {
     @Arg('clientId', () => ID) clientId: string,
     @Ctx() { currentUser }: AuthContext,
   ): Promise<string> {
-    const client = await Client.createQueryBuilder('client')
-      .leftJoinAndSelect('client.service', 'service')
-      .where('client.id = :clientId', { clientId })
-      .andWhere('service.userId = :userId', { userId: currentUser.id })
-      .getOne();
-
+    const client = await Client.getUserClient(clientId, currentUser.id);
     if (!client) throw new ForbiddenError();
 
     return client.clientToken();
@@ -84,13 +107,9 @@ export class ClientResolver {
     @Arg('input', () => CreateScheduleInput) input: CreateScheduleInput,
     @Ctx() { currentUser }: AuthContext,
   ): Promise<Client> {
-    const client = await Client.createQueryBuilder('client')
-      .leftJoinAndSelect('client.service', 'service')
+    const client = await Client.getUserClientQuery(clientId, currentUser.id)
       .leftJoinAndSelect('client.schedules', 'schedules')
-      .where('client.id = :clientId', { clientId })
-      .andWhere('service.userId = :userId', { userId: currentUser.id })
       .getOne();
-
     if (!client) throw new ForbiddenError();
 
     if (!FifteenIntervals.includes(input.time.split(':')[1]))
@@ -111,21 +130,33 @@ export class ClientResolver {
   }
 
   @Authorized()
-  @Mutation(() => Boolean)
+  @Mutation(() => Client)
   async emitClientEvent(
     @Arg('clientId', () => ID) clientId: string,
     @Ctx() { currentUser }: AuthContext,
-  ): Promise<boolean> {
-    const client = await Client.createQueryBuilder('client')
-      .leftJoinAndSelect('client.service', 'service')
-      .where('client.id = :clientId', { clientId })
-      .andWhere('service.userId = :userId', { userId: currentUser.id })
-      .getOne();
-
+  ): Promise<Client> {
+    const client = await Client.getUserClient(clientId, currentUser.id);
     if (!client) throw new ForbiddenError();
+
     clientPubSub.publishClientEvent(client, { type: ClientEventType.BACKUP });
 
-    return true;
+    await pEvent(backupEvents, clientId);
+    await client.reload();
+    return client;
+  }
+
+  @Authorized()
+  @Mutation(() => Client)
+  async purgeBackups(
+    @Arg('clientId', () => ID) clientId: string,
+    @Ctx() { currentUser }: AuthContext,
+  ): Promise<Client> {
+    const client = await Client.getUserClient(clientId, currentUser.id);
+    if (!client) throw new ForbiddenError();
+
+    await client.purgeBackups();
+
+    return client;
   }
 
   @Subscription({
@@ -142,10 +173,14 @@ export class ClientResolver {
   @FieldResolver(() => Client)
   async schedules(@Root() client: Client) {
     const Schedules = await Schedule.find({
-      cache: 1000,
       where: { clientId: client.id },
     });
 
     return Schedules;
+  }
+
+  @FieldResolver()
+  async service(@Root() { serviceId }: Client): Promise<Service> {
+    return Service.findOneOrFail(serviceId);
   }
 }

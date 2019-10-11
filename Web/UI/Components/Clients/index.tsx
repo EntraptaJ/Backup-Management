@@ -13,7 +13,7 @@ interface ClientPageProps {
 }
 
 export function ClientPage({ clientId }: ClientPageProps): React.ReactElement {
-  const { data } = useClientQuery({ variables: { clientId } });
+  const { data, refetch } = useClientQuery({ variables: { clientId } });
   const [getClientToken, { data: clientTokenData }] = useGetClientTokenLazyQuery({ variables: { clientId } })
 
   const handleClientTokenClick = useCallback(() => getClientToken(), [getClientToken])
@@ -26,7 +26,7 @@ export function ClientPage({ clientId }: ClientPageProps): React.ReactElement {
       </Header>
       
       <ScheduleTable schedules={data?.client.schedules} clientId={clientId} />
-      <BackupTable backups={data?.client.backups} clientId={clientId} />
+      <BackupTable backups={data?.client.backups} clientId={clientId} refetch={refetch} />
 
     </>
   );

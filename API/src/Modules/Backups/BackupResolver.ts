@@ -10,21 +10,16 @@ import {
   Subscription,
   Ctx,
 } from 'type-graphql';
-import { Backup, BackupState } from './BackupModel';
+import { Backup, BackupState, DATA_PATH } from './BackupModel';
 import {
   WriteStream,
   createWriteStream,
   createReadStream,
-  remove,
+  stat,
 } from 'fs-extra';
 import { createWritableServerStream } from './remote-streamer';
 import { Client } from '../Clients/ClientModel';
 import { AuthContext } from 'API/Context';
-
-const DATA_PATH =
-  process.env.NODE_ENV === 'production'
-    ? process.env.DATA_PATH || '/data'
-    : 'data';
 
 interface BackupStream {
   id: string;
@@ -45,7 +40,9 @@ export class BackupResolver {
     });
     await backup.save();
 
-    const writeStream = createWriteStream(`${DATA_PATH}/${backup.id}.tar`);
+    const writeStream = createWriteStream(
+      `${DATA_PATH}/${backup.clientId}/${backup.id}.tar`,
+    );
 
     const backupStream: BackupStream = { id: backup.id, writeStream };
     backupStreams.push(backupStream);
@@ -73,6 +70,9 @@ export class BackupResolver {
     const backup = await Backup.findOneOrFail({ where: { id: backupId } });
 
     backup.state = BackupState.FINISHED;
+    backup.fileSize = (await stat(
+      `${DATA_PATH}/${backup.clientId}/${backup.id}.tar`,
+    )).size;
     await backup.save();
 
     backupStreams = backupStreams.filter(({ id }) => id !== backupId);
@@ -94,7 +94,6 @@ export class BackupResolver {
 
     if (!backup) throw new ForbiddenError();
 
-    await remove(`${DATA_PATH}/${backup.id}.tar`);
     await backup.remove();
 
     return backup.client;

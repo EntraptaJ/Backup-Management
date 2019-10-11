@@ -2,10 +2,15 @@ mutation DeleteBackup($backupId: ID!) {
   deleteBackup(backupId: $backupId) {
     path
     id
+    folderSize
     backups {
       createdAt
       state
       id
+    }
+    service {
+      id
+      totalSize
     }
   }
 }

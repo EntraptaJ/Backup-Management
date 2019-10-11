@@ -22,6 +22,7 @@ export type Backup = {
   createdAt: Scalars['DateTime'],
   updatedAt: Scalars['DateTime'],
   state: BackupState,
+  fileSize: Scalars['Int'],
   client: Client,
 };
 
@@ -33,9 +34,13 @@ export enum BackupState {
 export type Client = {
    __typename?: 'Client',
   id: Scalars['ID'],
+  service: Service,
   schedules: Array<Schedule>,
   path: Scalars['String'],
+  keepBackupsCount: Scalars['Float'],
+  backupCount: Scalars['Int'],
   backups: Array<Backup>,
+  folderSize: Scalars['Int'],
 };
 
 export type ClientEvent = {
@@ -46,6 +51,10 @@ export type ClientEvent = {
 export enum ClientEventType {
   Backup = 'BACKUP'
 }
+
+export type ClientInput = {
+  path: Scalars['String'],
+};
 
 export type Configuration = {
    __typename?: 'Configuration',
@@ -60,10 +69,6 @@ export type CreateScheduleInput = {
   time: Scalars['String'],
 };
 
-export type CreateServiceInput = {
-  name: Scalars['String'],
-};
-
 export type CreateUtilityInput = {
   name: Scalars['String'],
 };
@@ -74,6 +79,7 @@ export type CurrentUser = {
   username: Scalars['String'],
   email: Scalars['String'],
   roles: Array<UserRole>,
+  services: Array<Service>,
 };
 
 
@@ -92,10 +98,17 @@ export type Mutation = {
   finishBackup: Backup,
   deleteBackup: Client,
   createClient: Service,
+  updateClient: Service,
+  deleteClient: Service,
   createSchedule: Client,
-  emitClientEvent: Scalars['Boolean'],
+  emitClientEvent: Client,
+  purgeBackups: Client,
   initialConfiguration: Configuration,
+  updateSchedule: Client,
+  deleteSchedule: Client,
   createService: ServiceOutput,
+  updateService: ServiceOutput,
+  deleteService: ServiceOutput,
   createUtility: Utility,
 };
 
@@ -142,6 +155,17 @@ export type MutationCreateClientArgs = {
 };
 
 
+export type MutationUpdateClientArgs = {
+  update: ClientInput,
+  clientId: Scalars['ID']
+};
+
+
+export type MutationDeleteClientArgs = {
+  clientId: Scalars['ID']
+};
+
+
 export type MutationCreateScheduleArgs = {
   input: CreateScheduleInput,
   clientId: Scalars['ID']
@@ -153,13 +177,40 @@ export type MutationEmitClientEventArgs = {
 };
 
 
+export type MutationPurgeBackupsArgs = {
+  clientId: Scalars['ID']
+};
+
+
 export type MutationInitialConfigurationArgs = {
   user: UserInput
 };
 
 
+export type MutationUpdateScheduleArgs = {
+  update: ScheduleInput,
+  scheduleId: Scalars['ID']
+};
+
+
+export type MutationDeleteScheduleArgs = {
+  scheduleId: Scalars['ID']
+};
+
+
 export type MutationCreateServiceArgs = {
-  input: CreateServiceInput
+  input: ServiceInput
+};
+
+
+export type MutationUpdateServiceArgs = {
+  update: ServiceInput,
+  serviceId: Scalars['ID']
+};
+
+
+export type MutationDeleteServiceArgs = {
+  serviceId: Scalars['ID']
 };
 
 
@@ -225,17 +276,25 @@ export type Schedule = {
   time: Scalars['String'],
 };
 
+export type ScheduleInput = {
+  time?: Maybe<Scalars['String']>,
+};
+
 export type Service = {
    __typename?: 'Service',
   id: Scalars['ID'],
   name: Scalars['String'],
+  totalSize: Scalars['Int'],
   clients: Array<Maybe<Client>>,
+};
+
+export type ServiceInput = {
+  name: Scalars['String'],
 };
 
 export type ServiceOutput = {
    __typename?: 'ServiceOutput',
-  services: Array<Service>,
-  service: Service,
+  currentUser: CurrentUser,
 };
 
 export type Subscription = {

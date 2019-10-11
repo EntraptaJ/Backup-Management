@@ -22,6 +22,7 @@ export type Backup = {
   createdAt: Scalars['DateTime'],
   updatedAt: Scalars['DateTime'],
   state: BackupState,
+  fileSize: Scalars['Int'],
   client: Client,
 };
 
@@ -33,9 +34,13 @@ export enum BackupState {
 export type Client = {
    __typename?: 'Client',
   id: Scalars['ID'],
+  service: Service,
   schedules: Array<Schedule>,
   path: Scalars['String'],
+  keepBackupsCount: Scalars['Float'],
+  backupCount: Scalars['Int'],
   backups: Array<Backup>,
+  folderSize: Scalars['Int'],
 };
 
 export type ClientEvent = {
@@ -46,6 +51,10 @@ export type ClientEvent = {
 export enum ClientEventType {
   Backup = 'BACKUP'
 }
+
+export type ClientInput = {
+  path: Scalars['String'],
+};
 
 export type Configuration = {
    __typename?: 'Configuration',
@@ -60,10 +69,6 @@ export type CreateScheduleInput = {
   time: Scalars['String'],
 };
 
-export type CreateServiceInput = {
-  name: Scalars['String'],
-};
-
 export type CreateUtilityInput = {
   name: Scalars['String'],
 };
@@ -74,6 +79,7 @@ export type CurrentUser = {
   username: Scalars['String'],
   email: Scalars['String'],
   roles: Array<UserRole>,
+  services: Array<Service>,
 };
 
 
@@ -92,10 +98,17 @@ export type Mutation = {
   finishBackup: Backup,
   deleteBackup: Client,
   createClient: Service,
+  updateClient: Service,
+  deleteClient: Service,
   createSchedule: Client,
-  emitClientEvent: Scalars['Boolean'],
+  emitClientEvent: Client,
+  purgeBackups: Client,
   initialConfiguration: Configuration,
+  updateSchedule: Client,
+  deleteSchedule: Client,
   createService: ServiceOutput,
+  updateService: ServiceOutput,
+  deleteService: ServiceOutput,
   createUtility: Utility,
 };
 
@@ -142,6 +155,17 @@ export type MutationCreateClientArgs = {
 };
 
 
+export type MutationUpdateClientArgs = {
+  update: ClientInput,
+  clientId: Scalars['ID']
+};
+
+
+export type MutationDeleteClientArgs = {
+  clientId: Scalars['ID']
+};
+
+
 export type MutationCreateScheduleArgs = {
   input: CreateScheduleInput,
   clientId: Scalars['ID']
@@ -153,13 +177,40 @@ export type MutationEmitClientEventArgs = {
 };
 
 
+export type MutationPurgeBackupsArgs = {
+  clientId: Scalars['ID']
+};
+
+
 export type MutationInitialConfigurationArgs = {
   user: UserInput
 };
 
 
+export type MutationUpdateScheduleArgs = {
+  update: ScheduleInput,
+  scheduleId: Scalars['ID']
+};
+
+
+export type MutationDeleteScheduleArgs = {
+  scheduleId: Scalars['ID']
+};
+
+
 export type MutationCreateServiceArgs = {
-  input: CreateServiceInput
+  input: ServiceInput
+};
+
+
+export type MutationUpdateServiceArgs = {
+  update: ServiceInput,
+  serviceId: Scalars['ID']
+};
+
+
+export type MutationDeleteServiceArgs = {
+  serviceId: Scalars['ID']
 };
 
 
@@ -225,17 +276,25 @@ export type Schedule = {
   time: Scalars['String'],
 };
 
+export type ScheduleInput = {
+  time?: Maybe<Scalars['String']>,
+};
+
 export type Service = {
    __typename?: 'Service',
   id: Scalars['ID'],
   name: Scalars['String'],
+  totalSize: Scalars['Int'],
   clients: Array<Maybe<Client>>,
+};
+
+export type ServiceInput = {
+  name: Scalars['String'],
 };
 
 export type ServiceOutput = {
    __typename?: 'ServiceOutput',
-  services: Array<Service>,
-  service: Service,
+  currentUser: CurrentUser,
 };
 
 export type Subscription = {
@@ -286,11 +345,14 @@ export type DeleteBackupMutation = (
   { __typename?: 'Mutation' }
   & { deleteBackup: (
     { __typename?: 'Client' }
-    & Pick<Client, 'path' | 'id'>
+    & Pick<Client, 'path' | 'id' | 'folderSize'>
     & { backups: Array<(
       { __typename?: 'Backup' }
       & Pick<Backup, 'createdAt' | 'state' | 'id'>
-    )> }
+    )>, service: (
+      { __typename?: 'Service' }
+      & Pick<Service, 'id' | 'totalSize'>
+    ) }
   ) }
 );
 
@@ -309,7 +371,7 @@ export type ClientQuery = (
       & Pick<Schedule, 'id' | 'createdAt' | 'updatedAt' | 'time'>
     )>, backups: Array<(
       { __typename?: 'Backup' }
-      & Pick<Backup, 'id' | 'updatedAt' | 'createdAt' | 'state'>
+      & Pick<Backup, 'id' | 'updatedAt' | 'createdAt' | 'state' | 'fileSize'>
     )> }
   ) }
 );
@@ -322,6 +384,26 @@ export type GetClientTokenQueryVariables = {
 export type GetClientTokenQuery = (
   { __typename?: 'Query' }
   & Pick<Query, 'getClientToken'>
+);
+
+export type StartBackupMutationVariables = {
+  clientId: Scalars['ID']
+};
+
+
+export type StartBackupMutation = (
+  { __typename?: 'Mutation' }
+  & { emitClientEvent: (
+    { __typename?: 'Client' }
+    & Pick<Client, 'id' | 'path' | 'folderSize'>
+    & { backups: Array<(
+      { __typename?: 'Backup' }
+      & Pick<Backup, 'id' | 'updatedAt' | 'createdAt' | 'state' | 'fileSize'>
+    )>, service: (
+      { __typename?: 'Service' }
+      & Pick<Service, 'id' | 'totalSize'>
+    ) }
+  ) }
 );
 
 export type CreateClientMutationVariables = {
@@ -337,7 +419,24 @@ export type CreateClientMutation = (
     & Pick<Service, 'id' | 'name'>
     & { clients: Array<Maybe<(
       { __typename?: 'Client' }
-      & Pick<Client, 'path' | 'id'>
+      & Pick<Client, 'id' | 'path' | 'folderSize'>
+    )>> }
+  ) }
+);
+
+export type DeleteClientMutationVariables = {
+  clientId: Scalars['ID']
+};
+
+
+export type DeleteClientMutation = (
+  { __typename?: 'Mutation' }
+  & { deleteClient: (
+    { __typename?: 'Service' }
+    & Pick<Service, 'id' | 'name'>
+    & { clients: Array<Maybe<(
+      { __typename?: 'Client' }
+      & Pick<Client, 'id' | 'path' | 'folderSize'>
     )>> }
   ) }
 );
@@ -407,8 +506,43 @@ export type CreateScheduleMutation = (
   ) }
 );
 
+export type DeleteScheduleMutationVariables = {
+  scheduleId: Scalars['ID']
+};
+
+
+export type DeleteScheduleMutation = (
+  { __typename?: 'Mutation' }
+  & { deleteSchedule: (
+    { __typename?: 'Client' }
+    & Pick<Client, 'id' | 'path'>
+    & { schedules: Array<(
+      { __typename?: 'Schedule' }
+      & Pick<Schedule, 'id' | 'createdAt' | 'updatedAt' | 'time'>
+    )> }
+  ) }
+);
+
+export type UpdateScheduleMutationVariables = {
+  scheduleId: Scalars['ID'],
+  update: ScheduleInput
+};
+
+
+export type UpdateScheduleMutation = (
+  { __typename?: 'Mutation' }
+  & { updateSchedule: (
+    { __typename?: 'Client' }
+    & Pick<Client, 'id' | 'path'>
+    & { schedules: Array<(
+      { __typename?: 'Schedule' }
+      & Pick<Schedule, 'id' | 'updatedAt' | 'time'>
+    )> }
+  ) }
+);
+
 export type CreateServiceMutationVariables = {
-  input: CreateServiceInput
+  input: ServiceInput
 };
 
 
@@ -416,10 +550,34 @@ export type CreateServiceMutation = (
   { __typename?: 'Mutation' }
   & { createService: (
     { __typename?: 'ServiceOutput' }
-    & { services: Array<(
-      { __typename?: 'Service' }
-      & Pick<Service, 'id' | 'name'>
-    )> }
+    & { currentUser: (
+      { __typename?: 'CurrentUser' }
+      & Pick<CurrentUser, 'id'>
+      & { services: Array<(
+        { __typename?: 'Service' }
+        & Pick<Service, 'id' | 'name' | 'totalSize'>
+      )> }
+    ) }
+  ) }
+);
+
+export type DeleteServiceMutationVariables = {
+  serviceId: Scalars['ID']
+};
+
+
+export type DeleteServiceMutation = (
+  { __typename?: 'Mutation' }
+  & { deleteService: (
+    { __typename?: 'ServiceOutput' }
+    & { currentUser: (
+      { __typename?: 'CurrentUser' }
+      & Pick<CurrentUser, 'id'>
+      & { services: Array<(
+        { __typename?: 'Service' }
+        & Pick<Service, 'id' | 'name'>
+      )> }
+    ) }
   ) }
 );
 
@@ -435,7 +593,7 @@ export type ServiceQuery = (
     & Pick<Service, 'id' | 'name'>
     & { clients: Array<Maybe<(
       { __typename?: 'Client' }
-      & Pick<Client, 'id' | 'path'>
+      & Pick<Client, 'id' | 'path' | 'folderSize'>
     )>> }
   ) }
 );
@@ -445,9 +603,13 @@ export type ServicesQueryVariables = {};
 
 export type ServicesQuery = (
   { __typename?: 'Query' }
-  & { services: Array<(
-    { __typename?: 'Service' }
-    & Pick<Service, 'id' | 'name'>
+  & { currentUser: Maybe<(
+    { __typename?: 'CurrentUser' }
+    & Pick<CurrentUser, 'id'>
+    & { services: Array<(
+      { __typename?: 'Service' }
+      & Pick<Service, 'id' | 'name' | 'totalSize'>
+    )> }
   )> }
 );
 

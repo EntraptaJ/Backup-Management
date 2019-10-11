@@ -1,5 +1,5 @@
-query Service($serviceId: ID!) {
-  service(serviceId: $serviceId) {
+mutation DeleteClient($clientId: ID!) {
+  deleteClient(clientId: $clientId) {
     id
     name
     clients {

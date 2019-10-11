@@ -1,0 +1,11 @@
+mutation UpdateSchedule($scheduleId: ID!, $update: ScheduleInput!) {
+  updateSchedule(scheduleId: $scheduleId, update: $update) {
+    id
+    path
+    schedules {
+      id
+      updatedAt
+      time
+    }
+  }
+}

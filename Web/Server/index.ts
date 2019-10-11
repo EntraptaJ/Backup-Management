@@ -49,7 +49,9 @@ async function startWeb(): Promise<void> {
         });
     }
     try {
-      return uiServer(ctx, { baseUrl: process.env.PUBLIC_URL! });
+      return uiServer(ctx, {
+        baseUrl: process.env.PUBLIC_URL || 'http://localhost',
+      });
     } catch {
       ctx.body = 'Error';
     }

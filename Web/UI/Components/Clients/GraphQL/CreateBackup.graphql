@@ -1,0 +1,19 @@
+mutation StartBackup($clientId: ID!) {
+  emitClientEvent(clientId: $clientId) {
+    id
+    path
+    folderSize
+    backups {
+      id
+      updatedAt
+      createdAt
+      id
+      state
+      fileSize
+    }
+    service {
+      id
+      totalSize
+    }
+  }
+}

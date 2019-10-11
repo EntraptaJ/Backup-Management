@@ -1,23 +1,25 @@
 // API/src/Modules/Backups/BackupModel.ts
-import { Field, ID, ObjectType } from 'type-graphql';
+import { config } from 'API/Config';
+import { ApolloError } from 'apollo-server-koa';
+import { sign, verify } from 'jsonwebtoken';
+import { Field, ID, Int, ObjectType } from 'type-graphql';
 import {
   BaseEntity,
+  BeforeRemove,
   Column,
   CreateDateColumn,
   Entity,
+  FindOneOptions,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-  FindOneOptions,
-  OneToMany,
+  SelectQueryBuilder,
 } from 'typeorm';
-import { Service } from '../Services/ServiceModel';
-import { sign, verify } from 'jsonwebtoken';
-import { config } from 'API/Config';
-import { ApolloError } from 'apollo-server-koa';
 import { Backup } from '../Backups/BackupModel';
 import { Schedule } from '../Schedules/ScheduleModel';
+import { Service } from '../Services/ServiceModel';
 
 interface ClientTokenPayload {
   clientId: string;
@@ -36,6 +38,7 @@ export class Client extends BaseEntity {
   @UpdateDateColumn()
   readonly updatedAt: Date;
 
+  @Field(() => Service)
   @ManyToOne(() => Service)
   @JoinColumn()
   readonly service: Service;
@@ -57,9 +60,30 @@ export class Client extends BaseEntity {
   @Column('text')
   path: string;
 
+  @Field()
+  @Column('int', { default: 3 })
+  keepBackupsCount: number;
+
+  @Field(() => Int)
+  async backupCount(): Promise<number> {
+    return Backup.count({ where: { clientId: this.id } });
+  }
+
   @Field(() => [Backup])
   async backups(): Promise<Backup[]> {
     return Backup.find({ clientId: this.id });
+  }
+
+  @Field(() => Int)
+  async folderSize(): Promise<number> {
+    const { sum } = await Backup.createQueryBuilder('backups')
+      .select('SUM(backups.fileSize)', 'sum')
+      .where('backups.clientId = :clientId', { clientId: this.id })
+      .getRawOne();
+    if (!sum) {
+      return 0;
+    }
+    return sum;
   }
 
   static async getClientFromToken(
@@ -75,5 +99,46 @@ export class Client extends BaseEntity {
       throw new ApolloError('INVALID Subscription', 'INVALID_SUBSCRIPTION');
 
     return client;
+  }
+
+  /**
+   * Purges backups further then the set keep backups amount
+   */
+  async purgeBackups(): Promise<any> {
+    const backups = await Backup.find({
+      where: { clientId: this.id },
+      order: { createdAt: 'DESC' },
+      skip: this.keepBackupsCount,
+    });
+
+    await Backup.remove(backups);
+  }
+
+  static getUserClientQuery(
+    clientId: string,
+    userId: string,
+  ): SelectQueryBuilder<Client> {
+    return Client.createQueryBuilder('client')
+      .leftJoinAndSelect('client.service', 'service')
+      .where('client.id = :clientId', { clientId })
+      .andWhere('service.userId = :userId', { userId });
+  }
+
+  static async getUserClient(
+    clientId: string,
+    userId: string,
+  ): Promise<Client | undefined> {
+    return this.getUserClientQuery(clientId, userId).getOne();
+  }
+
+  @BeforeRemove()
+  async beforeRemove(): Promise<void> {
+    console.log(`Removing ${this.id}`);
+
+    const [schedules, backups] = await Promise.all([
+      Schedule.find({ clientId: this.id }),
+      Backup.find({ clientId: this.id }),
+    ]);
+    await Promise.all([Schedule.remove(schedules), Backup.remove(backups)]);
   }
 }
