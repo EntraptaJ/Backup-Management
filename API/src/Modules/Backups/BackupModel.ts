@@ -1,20 +1,20 @@
 // API/src/Modules/Backups/BackupModel.ts
 import { EventEmitter } from 'events';
+import { remove } from 'fs-extra';
 import { Field, ID, Int, ObjectType, registerEnumType } from 'type-graphql';
 import {
   AfterInsert,
   BaseEntity,
+  BeforeRemove,
   Column,
   CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Client } from '../Clients/ClientModel';
-import { BackupFile } from './BackupFileModel';
 
 export const DATA_PATH =
   process.env.NODE_ENV === 'production'
@@ -59,14 +59,19 @@ export class Backup extends BaseEntity {
   @Column('int', { default: 0 })
   fileSize: number;
 
-  @OneToOne(() => BackupFile)
-  @JoinColumn()
-  backupFile: BackupFile;
-  @Column()
-  backupFileId: string;
-
   @AfterInsert()
   afterInsert(): void {
     backupEvents.emit(this.clientId);
+  }
+
+  @BeforeRemove()
+  async deleteBackup(): Promise<boolean> {
+    console.log(`Deleting archive for ${this.id}`);
+
+    remove(`${DATA_PATH}/${this.clientId}/${this.id}.tar`).catch(() => {
+      console.info(`Failed to delete archive for ${this.id}`);
+    });
+
+    return true;
   }
 }

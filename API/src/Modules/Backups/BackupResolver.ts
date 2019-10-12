@@ -1,25 +1,29 @@
 // API/src/Modules/Backups/BackupResolver.ts
-import { AuthContext } from 'API/Context';
-import intoStream from 'into-stream';
 import {
-  Arg,
-  Ctx,
-  FieldResolver,
-  ForbiddenError,
-  ID,
-  Mutation,
   Resolver,
+  Mutation,
+  Arg,
+  ID,
+  ForbiddenError,
+  FieldResolver,
   Root,
   Subscription,
+  Ctx,
 } from 'type-graphql';
-import { Client } from '../Clients/ClientModel';
-import { Backup, BackupState } from './BackupModel';
+import { Backup, BackupState, DATA_PATH } from './BackupModel';
+import {
+  WriteStream,
+  createWriteStream,
+  createReadStream,
+  stat,
+} from 'fs-extra';
 import { createWritableServerStream } from './remote-streamer';
-import { BackupFile } from './BackupFileModel';
+import { Client } from '../Clients/ClientModel';
+import { AuthContext } from 'API/Context';
 
 interface BackupStream {
   id: string;
-  buffer?: Buffer;
+  writeStream: WriteStream;
 }
 
 let backupStreams: BackupStream[] = [];
@@ -30,16 +34,17 @@ export class BackupResolver {
   async createBackup(@Arg('clientToken') clientToken: string): Promise<Backup> {
     const client = await Client.getClientFromToken(clientToken);
 
-    const backupFile = await BackupFile.create().save();
-
     const backup = Backup.create({
       state: BackupState.STREAMING,
       clientId: client.id,
-      backupFileId: backupFile.id,
     });
     await backup.save();
 
-    const backupStream: BackupStream = { id: backup.id };
+    const writeStream = createWriteStream(
+      `${DATA_PATH}/${backup.clientId}/${backup.id}.tar`,
+    );
+
+    const backupStream: BackupStream = { id: backup.id, writeStream };
     backupStreams.push(backupStream);
 
     return backup;
@@ -53,12 +58,7 @@ export class BackupResolver {
     const backupStream = backupStreams.find(({ id }) => id === backupId);
     if (!backupStream) throw new ForbiddenError();
 
-    if (backupStream.buffer)
-      backupStream.buffer = Buffer.concat([
-        backupStream.buffer,
-        Buffer.from(chunk, 'base64'),
-      ]);
-    else backupStream.buffer = Buffer.from(chunk, 'base64');
+    backupStream.writeStream.write(Buffer.from(chunk, 'base64'));
 
     return true;
   }
@@ -67,20 +67,15 @@ export class BackupResolver {
   async finishBackup(
     @Arg('backupId', () => ID) backupId: string,
   ): Promise<Backup> {
-    const backupStream = backupStreams.find(({ id }) => id === backupId);
-    if (!backupStream || !backupStream.buffer) throw new ForbiddenError();
-
-    const backup = await Backup.findOneOrFail({
-      where: { id: backupId },
-      relations: ['backupFile'],
-    });
-
-    backup.backupFile.archiveFile = backupStream.buffer;
-    await backup.backupFile.save();
+    const backup = await Backup.findOneOrFail({ where: { id: backupId } });
 
     backup.state = BackupState.FINISHED;
-    backup.fileSize = backupStream.buffer.length;
+    backup.fileSize = (await stat(
+      `${DATA_PATH}/${backup.clientId}/${backup.id}.tar`,
+    )).size;
     await backup.save();
+
+    backupStreams = backupStreams.filter(({ id }) => id !== backupId);
 
     return backup;
   }
@@ -112,13 +107,12 @@ export class BackupResolver {
       const backup = await Backup.findOneOrFail({
         where: { clientId: client.id },
         order: { updatedAt: 'DESC' },
-        relations: ['backupFile'],
       });
 
-      const readStream = intoStream(backup.backupFile.archiveFile);
-
       const { iterable, writeStream } = await createWritableServerStream();
-      readStream.pipe(
+
+      const streamer = createReadStream(`${DATA_PATH}/${backup.id}.tar`);
+      streamer.pipe(
         writeStream,
         { end: true },
       );
