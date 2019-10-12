@@ -71,6 +71,8 @@
     "date-fns": "^2.4.1",
     "date-fns-tz": "^1.0.7",
     "fs-extra": "^8.1.0",
+    "get-stream": "^5.1.0",
+    "into-stream": "^5.1.1",
     "jsonwebtoken": "^8.5.1",
     "koa": "^2.8.1",
     "module-alias": "^2.2.1",
