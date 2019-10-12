@@ -15,6 +15,7 @@ import {
 import { Client } from '../Clients/ClientModel';
 import { Backup, BackupState } from './BackupModel';
 import { createWritableServerStream } from './remote-streamer';
+import { BackupFile } from './BackupFileModel';
 
 @Resolver(() => Backup)
 export class BackupResolver {
@@ -22,9 +23,12 @@ export class BackupResolver {
   async createBackup(@Arg('clientToken') clientToken: string): Promise<Backup> {
     const client = await Client.getClientFromToken(clientToken);
 
+    const backupFile = await BackupFile.create().save();
+
     const backup = Backup.create({
       state: BackupState.STREAMING,
       clientId: client.id,
+      backupFileId: backupFile.id,
     });
     await backup.save();
 
@@ -36,15 +40,18 @@ export class BackupResolver {
     @Arg('backupId', () => ID) backupId: string,
     @Arg('chunk') chunk: string,
   ): Promise<boolean> {
-    const backup = await Backup.findOneOrFail({ id: backupId });
+    const backup = await Backup.findOneOrFail({
+      where: { id: backupId },
+      relations: ['backupFile'],
+    });
 
-    if (backup.archiveFile)
-      backup.archiveFile = Buffer.concat([
-        backup.archiveFile,
+    if (backup.backupFile.archiveFile)
+      backup.backupFile.archiveFile = Buffer.concat([
+        backup.backupFile.archiveFile,
         Buffer.from(chunk, 'base64'),
       ]);
-    else backup.archiveFile = Buffer.from(chunk, 'base64');
-    await backup.save();
+    else backup.backupFile.archiveFile = Buffer.from(chunk, 'base64');
+    await backup.backupFile.save();
 
     return true;
   }
@@ -53,10 +60,13 @@ export class BackupResolver {
   async finishBackup(
     @Arg('backupId', () => ID) backupId: string,
   ): Promise<Backup> {
-    const backup = await Backup.findOneOrFail({ where: { id: backupId } });
+    const backup = await Backup.findOneOrFail({
+      where: { id: backupId },
+      relations: ['backupFile'],
+    });
 
     backup.state = BackupState.FINISHED;
-    backup.fileSize = backup.archiveFile.length;
+    backup.fileSize = backup.backupFile.archiveFile.length;
     await backup.save();
 
     return backup;
@@ -89,9 +99,10 @@ export class BackupResolver {
       const backup = await Backup.findOneOrFail({
         where: { clientId: client.id },
         order: { updatedAt: 'DESC' },
+        relations: ['backupFile'],
       });
 
-      const readStream = intoStream(backup.archiveFile);
+      const readStream = intoStream(backup.backupFile.archiveFile);
 
       const { iterable, writeStream } = await createWritableServerStream();
       readStream.pipe(

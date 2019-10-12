@@ -11,8 +11,11 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { Client } from '../Clients/ClientModel';
+import { BackupFile } from './BackupFileModel';
 
 export const DATA_PATH =
   process.env.NODE_ENV === 'production'
@@ -57,9 +60,11 @@ export class Backup extends BaseEntity {
   @Column('int', { default: 0 })
   fileSize: number;
 
-  @Field(() => String)
-  @Column('bytea', { nullable: true })
-  archiveFile: Buffer;
+  @OneToOne(() => BackupFile)
+  @JoinColumn()
+  backupFile: BackupFile;
+  @Column()
+  backupFileId: string;
 
   @AfterInsert()
   afterInsert(): void {
