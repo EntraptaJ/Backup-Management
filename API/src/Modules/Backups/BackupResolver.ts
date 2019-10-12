@@ -17,6 +17,13 @@ import { Backup, BackupState } from './BackupModel';
 import { createWritableServerStream } from './remote-streamer';
 import { BackupFile } from './BackupFileModel';
 
+interface BackupStream {
+  id: string;
+  buffer?: Buffer;
+}
+
+let backupStreams: BackupStream[] = [];
+
 @Resolver(() => Backup)
 export class BackupResolver {
   @Mutation(() => Backup)
@@ -32,6 +39,9 @@ export class BackupResolver {
     });
     await backup.save();
 
+    const backupStream: BackupStream = { id: backup.id };
+    backupStreams.push(backupStream);
+
     return backup;
   }
 
@@ -40,18 +50,15 @@ export class BackupResolver {
     @Arg('backupId', () => ID) backupId: string,
     @Arg('chunk') chunk: string,
   ): Promise<boolean> {
-    const backup = await Backup.findOneOrFail({
-      where: { id: backupId },
-      relations: ['backupFile'],
-    });
+    const backupStream = backupStreams.find(({ id }) => id === backupId);
+    if (!backupStream) throw new ForbiddenError();
 
-    if (backup.backupFile.archiveFile)
-      backup.backupFile.archiveFile = Buffer.concat([
-        backup.backupFile.archiveFile,
+    if (backupStream.buffer)
+      backupStream.buffer = Buffer.concat([
+        backupStream.buffer,
         Buffer.from(chunk, 'base64'),
       ]);
-    else backup.backupFile.archiveFile = Buffer.from(chunk, 'base64');
-    await backup.backupFile.save();
+    else backupStream.buffer = Buffer.from(chunk, 'base64');
 
     return true;
   }
@@ -60,13 +67,19 @@ export class BackupResolver {
   async finishBackup(
     @Arg('backupId', () => ID) backupId: string,
   ): Promise<Backup> {
+    const backupStream = backupStreams.find(({ id }) => id === backupId);
+    if (!backupStream || !backupStream.buffer) throw new ForbiddenError();
+
     const backup = await Backup.findOneOrFail({
       where: { id: backupId },
       relations: ['backupFile'],
     });
 
+    backup.backupFile.archiveFile = backupStream.buffer;
+    await backup.backupFile.save();
+
     backup.state = BackupState.FINISHED;
-    backup.fileSize = backup.backupFile.archiveFile.length;
+    backup.fileSize = backupStream.buffer.length;
     await backup.save();
 
     return backup;
