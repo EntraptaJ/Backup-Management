@@ -7,6 +7,7 @@ COPY ./UI/ ./UI/
 COPY ./bin/ ./bin/
 COPY ./types/ ./types/
 COPY ./Icons/ ./Icons/
+COPY ./public/ ./public/
 RUN NODE_ENV=production npm run build
 
 FROM mhart/alpine-node:latest
