@@ -9,10 +9,9 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-  OneToMany,
-  OneToOne,
 } from 'typeorm';
 import { Client } from '../Clients/ClientModel';
 import { BackupFile } from './BackupFileModel';

@@ -7,10 +7,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-  JoinColumn,
-  OneToOne,
 } from 'typeorm';
-import { Backup } from './BackupModel';
 
 @ObjectType()
 @Entity()
