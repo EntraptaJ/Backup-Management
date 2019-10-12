@@ -15,6 +15,16 @@ import { SnackbarProvider } from 'notistack';
 
 window.setImmediate = window.setTimeout;
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async function() {
+    const worker = await navigator.serviceWorker.register(
+      '/service-worker.ts',
+      { scope: '/' },
+    );
+    console.log('SW registered: ', worker);
+  });
+}
+
 export let imports: ImportItem[] = [];
 
 function CoreApp({ children }: PropsWithChildren<{}>): React.ReactElement {
